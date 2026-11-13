@@ -11,6 +11,8 @@ import { logEvidence, earthLocation } from '../../game/instruments/earthInstrume
 import { makeRockGeometry } from '../../game/core/shaders';
 import { mulberry32 } from '../../game/core/noise';
 import { toast } from '../../game/core/ui';
+import { playFP } from '../../game/player/fpAnim';
+import { runtime } from '../../game/player/PlayerController';
 
 function Specimen({ type }: { type: EarthPOI['specimen'] }) {
   const content = useMemo(() => {
@@ -151,7 +153,8 @@ export function InspectView() {
 
   const close = () => { setPanel(null); useUI.getState().setInspect(null); audio.ui('close'); };
 
-  const record = () => {
+  const record = () => recordAs(cat as CategoryId);
+  const recordAs = (cat: CategoryId) => {
     if (!cat) return;
     if (!poi.categories.includes(cat)) {
       audio.ui('error');
@@ -159,22 +162,29 @@ export function InspectView() {
       return;
     }
     g.setInspectClass(id, cat);
+    setPanel(null);
+    useUI.getState().setInspect(null);
     logEvidence(evKey, 'Visual inspection', `${features.length} features observed · filed under ${CAT_BY_ID[cat].short}`);
     features.forEach((f) =>
       g.addJournal({ world: 'earth', kind: 'observation', title: `${poi.name}: ${f.label}`, text: f.text, cat }),
     );
-    setFeedback('Observation recorded in the journal as a DIRECT OBSERVATION. Interpretations are made later, in the checklist.');
+    setFeedback('Recorded! Close this window to keep exploring.');
   };
 
   const collect = () => {
     const n = g.samples.length;
-    if (n >= 6) { toast('Sample capacity full', 'Field sample case holds 6 samples.', 'warn'); return; }
+    if (n >= 6) { toast('Sample case full', 'You can carry 6 samples.', 'warn'); return; }
     const sid = `QB-${String(n + 1).padStart(3, '0')}`;
-    if (g.addSample({ id: sid, poi: id, name: poi.name, location: earthLocation() })) {
-      audio.servo(0.3);
-      logEvidence(`sample:${id}`, 'Sampling kit', `Sample ${sid}`);
-      g.addJournal({ world: 'earth', kind: 'sample', title: `Sample ${sid} collected`, text: `${poi.name}. Stored in sealed bag; awaiting field-lab analysis.`, cat: poi.categories[0] });
-    }
+    setPanel(null);
+    useUI.getState().setInspect(null);
+    useUI.getState().setRaised(false);
+    // Kneel, scoop the sample into a jar, lift it up to look at it — then log it
+    playFP('pickup', 2600, runtime.pitch, () => {
+      if (useGame.getState().addSample({ id: sid, poi: id, name: poi.name, location: earthLocation() })) {
+        logEvidence(`sample:${id}`, 'Sampling kit', `Sample ${sid}`);
+        useGame.getState().addJournal({ world: 'earth', kind: 'sample', title: `Sample ${sid} collected`, text: `${poi.name}. Stored in a sealed jar.`, cat: poi.categories[0] });
+      }
+    });
   };
 
   return (
@@ -223,14 +233,9 @@ export function InspectView() {
               </div>
             ))}
             <div className="hr" />
-            <div className="label">File observation under research category</div>
-            <div className="row" style={{ marginTop: 6 }}>
-              <select className="select" style={{ flex: 1 }} value={cat} disabled={!allSeen || done} onChange={(e) => { setCat(e.target.value as CategoryId); setFeedback(''); }}>
-                <option value="">{allSeen ? '— choose category —' : 'Observe all points first'}</option>
-                {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.num} {c.title}</option>)}
-              </select>
-              <button className="btn primary" disabled={!allSeen || !cat || done} onClick={record}>{done ? 'Recorded ✓' : 'Record'}</button>
-            </div>
+            <button className="btn primary" style={{ width: '100%', padding: '12px', fontSize: 13 }} disabled={!allSeen || done} onClick={() => { setCat(poi.categories[0]); recordAs(poi.categories[0]); }}>
+              {done ? 'Observation recorded ✓' : allSeen ? 'Record observation ▸' : `Click the glowing dots (${seen.length}/${features.length})`}
+            </button>
             {feedback && <div className="small" style={{ marginTop: 6, color: feedback.startsWith('Reconsider') ? 'var(--amber)' : 'var(--green)', lineHeight: 1.45 }}>{feedback}</div>}
             {poi.spectral && <div className="tiny" style={{ marginTop: 10, color: 'var(--amber)' }}>Tip: a Spectral Scanner reading gives a PRELIMINARY composition. Lab analysis is needed for confirmation.</div>}
             {poi.sampleable && (

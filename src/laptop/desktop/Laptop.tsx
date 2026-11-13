@@ -10,6 +10,8 @@ import { GalleryView, JournalView } from '../../ui/journal/Views';
 import { AnalysisApp } from '../analysis/AnalysisApp';
 import { ReportApp } from '../analysis/ReportApp';
 import { useRoverLoop, feedState } from '../../game/camera/RoverFeed';
+import { Icon, type IconName } from '../../ui/icons';
+import { startMarsSimple, setupSimpleMars } from '../../game/missions/marsStations';
 import { RadioFeed, Toasts, useMissionClock } from '../../ui/common';
 import { isTyping, matches } from '../../game/core/input';
 import { earthRelief } from '../../ui/journal/Tablet';
@@ -18,17 +20,17 @@ import { MARS_SIZE } from '../../game/environments/mars/marsTerrain';
 
 type AppId = 'overview' | 'rover' | 'nav' | 'telemetry' | 'instruments' | 'checklist' | 'archive' | 'comms' | 'analysis' | 'report';
 
-const APPS: { id: AppId; name: string; glyph: string; needsMars?: boolean }[] = [
-  { id: 'overview', name: 'Mission', glyph: '◎' },
-  { id: 'rover', name: 'Rover Control', glyph: '◉', needsMars: true },
-  { id: 'nav', name: 'Navigation', glyph: '⌖', needsMars: true },
-  { id: 'telemetry', name: 'Telemetry', glyph: '∿', needsMars: true },
-  { id: 'instruments', name: 'Instruments', glyph: '⚙', needsMars: true },
-  { id: 'checklist', name: 'Checklist', glyph: '☑' },
-  { id: 'archive', name: 'Archive', glyph: '▤' },
-  { id: 'comms', name: 'Comms', glyph: '⟟' },
-  { id: 'analysis', name: 'Analysis', glyph: '⇄' },
-  { id: 'report', name: 'Report', glyph: '✉' },
+const APPS: { id: AppId; name: string; glyph: string; needsMars?: boolean; hidden?: boolean }[] = [
+  { id: 'overview', name: 'Start', glyph: 'home' },
+  { id: 'rover', name: 'Rover', glyph: 'rover', needsMars: true },
+  { id: 'checklist', name: 'Progress', glyph: 'check' },
+  { id: 'archive', name: 'Photos', glyph: 'photos' },
+  { id: 'analysis', name: 'Compare', glyph: 'compare' },
+  { id: 'report', name: 'Report', glyph: 'report' },
+  { id: 'nav', name: 'Navigation', glyph: '⌖', needsMars: true, hidden: true },
+  { id: 'telemetry', name: 'Telemetry', glyph: '∿', needsMars: true, hidden: true },
+  { id: 'instruments', name: 'Instruments', glyph: '⚙', needsMars: true, hidden: true },
+  { id: 'comms', name: 'Comms', glyph: '⟟', hidden: true },
 ];
 
 function Archive() {
@@ -101,6 +103,7 @@ export function Laptop({ onExit, onSubmit }: { onExit: () => void; onSubmit: () 
     const t2 = setTimeout(() => setBoot(2), 2000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
+  useEffect(() => { if (g.marsStarted) setupSimpleMars(); }, []);
   useEffect(() => {
     if (g.marsStarted) audio.startLoop('rover');
     return () => audio.stopLoop('rover');
@@ -117,7 +120,7 @@ export function Laptop({ onExit, onSubmit }: { onExit: () => void; onSubmit: () 
       if (d && !notified) {
         notified = true;
         toast('MARS INVESTIGATION COMPLETE', 'Analysis workstation unlocked.', 'complete');
-        radio('MISSION DIRECTOR', 'Both datasets are in. Open the Analysis application and compare Earth and Mars — carefully. Tell us where the analogue works, and where it does not.');
+        radio('ROVI', 'Mars is done! Now open Compare and find what is the same and what is different.');
       }
     });
   }, []);
@@ -146,15 +149,13 @@ export function Laptop({ onExit, onSubmit }: { onExit: () => void; onSubmit: () 
     useGame.setState({ marsStarted: true });
     rover.started = true;
     rover.startTime = performance.now() / 1000;
-    resetRover();
-    feedState.cine = 9;
+    startMarsSimple();
+    feedState.cine = 7;
     rover.cam = 'NAVCAM';
     setApp('rover');
     audio.ui('confirm');
     g.addJournal({ world: 'mars', kind: 'event', title: 'Mars rover operations initiated', text: 'Link established with ARES-6. Establishing view reconstructed from telemetry; switching to live navigation camera.' });
-    radio('MISSION CONTROL', 'Mission Control confirms: all stations go for Mars surface operations.');
-    setTimeout(() => radio('ROVER OPS — CAPCOM', 'ARES-6 reports healthy. Navigation camera is live. Remember — every command takes time to reach the rover. Drive with intent.'), 5000);
-    setTimeout(() => radio('DR. LIN — GEOLOGY', 'Use your Qaidam experience: the layered outcrop to the north, the ripple field to the east, wind-eroded ridges to the north-east. Check the Navigation app.'), 14000);
+    radio('ROVI', 'We are on Mars! Click station 1 and I will drive us there.');
   };
 
   return (
@@ -187,7 +188,7 @@ export function Laptop({ onExit, onSubmit }: { onExit: () => void; onSubmit: () 
               <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
                 {/* Dock */}
                 <div style={{ width: 74, background: '#0a0d10', borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, gap: 4, flex: 'none' }}>
-                  {APPS.map((a) => {
+                  {APPS.filter((a) => !a.hidden).map((a) => {
                     const lk = locked(a.id);
                     return (
                       <button
@@ -200,7 +201,7 @@ export function Laptop({ onExit, onSubmit }: { onExit: () => void; onSubmit: () 
                           color: lk ? 'var(--dim2)' : 'var(--text)', cursor: 'pointer', borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
                         }}
                       >
-                        <span style={{ fontSize: 18 }}>{lk ? '🔒︎' : a.glyph}</span>
+                        <span style={{ display: 'flex' }}>{a.glyph.length > 2 ? <Icon name={(lk ? 'lock' : a.glyph) as IconName} size={22} /> : a.glyph}</span>
                         <span style={{ fontSize: 8.5, letterSpacing: '0.05em' }}>{a.name}</span>
                       </button>
                     );

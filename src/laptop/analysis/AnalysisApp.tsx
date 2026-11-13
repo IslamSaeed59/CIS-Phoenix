@@ -11,7 +11,7 @@ import { StatusChip } from '../../ui/common';
 const Q_RES = { low: 220, medium: 300, high: 400 } as const;
 
 export function AnalysisApp() {
-  const [tab, setTab] = useState<'datasets' | 'viz' | 'sims' | 'conclusions'>('datasets');
+  const [tab, setTab] = useState<'datasets' | 'viz' | 'sims' | 'conclusions'>('conclusions');
   const g = useGame();
   const cp = comparisonProgress(g);
   return (
@@ -22,14 +22,14 @@ export function AnalysisApp() {
           <div className="tiny dim">Analogue = useful for selected processes &amp; operations, not because Earth and Mars are identical.</div>
         </div>
         <div className="mono tiny" style={{ textAlign: 'right', lineHeight: 1.6 }}>
-          STATEMENTS {cp.classified}/{cp.total} · SIMULATIONS {cp.sims}/2+ · APPLICATIONS {cp.apps}/3+<br />
+          ANSWERED {cp.classified}/{cp.total}<br />
           {cp.ready ? <span className="green">READY FOR FINAL REPORT</span> : <span className="amber">ANALYSIS IN PROGRESS</span>}
         </div>
       </div>
       <div className="tabs">
-        {(['datasets', 'viz', 'sims', 'conclusions'] as const).map((t) => (
+        {(['conclusions', 'sims', 'viz', 'datasets'] as const).map((t) => (
           <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => { setTab(t); audio.ui('click'); }}>
-            {t === 'datasets' ? 'Side-by-side datasets' : t === 'viz' ? 'Visualisations' : t === 'sims' ? 'Simulations' : 'Conclusions'}
+            {t === 'datasets' ? 'Your data (extra)' : t === 'viz' ? '3D compare (extra)' : t === 'sims' ? 'Play with simulations' : '⚖️ Same or different?'}
           </button>
         ))}
       </div>
@@ -415,8 +415,8 @@ function Conclusions() {
   const g = useGame();
   return (
     <div className="scroll" style={{ padding: 14, height: '100%' }}>
-      <div className="label">Classify each statement as a SIMILARITY, DIFFERENCE or ANALOGUE LIMITATION</div>
-      <div className="tiny dim" style={{ margin: '4px 0 10px' }}>Feedback is provided after classification. You may revise.</div>
+      <div style={{ fontSize: 20, fontWeight: 700 }}>Is it the same on Earth and Mars?</div>
+      <div className="small dim" style={{ margin: '4px 0 12px' }}>For each sentence pick: <b className="teal">similarity</b> (same), <b className="amber">difference</b>, or <b style={{ color: 'var(--violet)' }}>limitation</b> (where the comparison stops working).</div>
       {COMPARISON_STATEMENTS.map((s) => {
         const v = g.classified[s.id];
         const correct = v === s.answer;

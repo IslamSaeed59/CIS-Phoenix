@@ -118,6 +118,8 @@ interface GameState {
   simsRun: string[];
   reportSubmitted: boolean;
   completedOnce: boolean;
+  stars: Record<string, number>;
+  addStar: (key: string) => void;
 
   setPhase: (p: Phase) => void;
   newGame: () => void;
@@ -165,6 +167,7 @@ const initialProgress = () => ({
   apps: [],
   simsRun: [],
   reportSubmitted: false,
+  stars: {} as Record<string, number>,
 });
 
 export const useGame = create<GameState>()(
@@ -230,6 +233,7 @@ export const useGame = create<GameState>()(
         set({ apps: a.includes(id) ? a.filter((x) => x !== id) : [...a, id] });
       },
       runSim: (id) => { if (!get().simsRun.includes(id)) set({ simsRun: [...get().simsRun, id] }); },
+      addStar: (key) => { if (!get().stars[key]) set({ stars: { ...get().stars, [key]: 1 } }); },
       submitReport: () => set({ reportSubmitted: true, completedOnce: true }),
       devFill: (w) => {
         const tasks = w === 'earth' ? EARTH_TASKS : MARS_TASKS;
@@ -297,7 +301,7 @@ export function comparisonProgress(s = useGame.getState()) {
     total: COMPARISON_STATEMENTS.length,
     sims: s.simsRun.length,
     apps: s.apps.length,
-    ready: classified === COMPARISON_STATEMENTS.length && s.simsRun.length >= 2 && s.apps.length >= 3,
+    ready: classified === COMPARISON_STATEMENTS.length,
   };
 }
 
@@ -319,8 +323,9 @@ export function scienceScore(s = useGame.getState()) {
     });
   });
   let comp = 0;
-  const compMax = COMPARISON_STATEMENTS.length * 3 + APPLICATIONS.filter((a) => a.valid).length * 2;
+  const compMax = COMPARISON_STATEMENTS.length * 3 + APPLICATIONS.filter((a) => a.valid).length * 2 + 32;
   COMPARISON_STATEMENTS.forEach((c) => { if (s.classified[c.id] === c.answer) comp += 3; });
+  comp += Object.keys(s.stars).length; // stars from discoveries
   s.apps.forEach((id) => {
     const a = APPLICATIONS.find((x) => x.id === id);
     comp += a?.valid ? 2 : -2;

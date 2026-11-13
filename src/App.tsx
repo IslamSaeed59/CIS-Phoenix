@@ -8,6 +8,8 @@ import { Briefing } from './ui/briefing/Briefing';
 import { FadeLayer } from './ui/common';
 import { IntroScene } from './game/environments/space/IntroScene';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { DiscoveryCard } from './ui/DiscoveryCard';
+import { PhotoOverlay, Banner } from './ui/FX';
 
 const EarthScene = lazy(() => import('./game/environments/qaidam/EarthScene').then((m) => ({ default: m.EarthScene })));
 const HQScene = lazy(() => import('./game/environments/hq/HQScene').then((m) => ({ default: m.HQScene })));
@@ -75,6 +77,9 @@ export default function App() {
         {phase === 'hq' && <HQScene />}
         {phase === 'ending' && <EndingScene />}
       </Suspense>
+      {phase !== 'menu' && <DiscoveryCard />}
+      <PhotoOverlay />
+      <Banner />
       <FadeLayer />
     </ErrorBoundary>
   );

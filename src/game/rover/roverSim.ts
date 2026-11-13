@@ -9,6 +9,8 @@ import { radio, toast } from '../core/ui';
 import { audio } from '../core/audio';
 import { isDown } from '../core/input';
 import { tempC, captureThumb } from '../instruments/earthInstruments';
+import { queueDiscovery } from '../core/discovery';
+import { photoWithFX } from '../core/fx';
 
 export type CamId = 'NAVCAM' | 'MASTCAM' | 'HAZ-F' | 'HAZ-R' | 'ARMCAM';
 export const CAMS: { id: CamId; name: string; fov: number; desc: string }[] = [
@@ -33,6 +35,7 @@ export const rover = {
   sol: 412, lmst: 10.5,
   storm: 0, stormPhase: 'none' as 'none' | 'incoming' | 'active' | 'clearing' | 'done', stormT: 0,
   latency: 1.4, commQuality: 1, training: false,
+  autoSpeed: 0.6, autoTurn: 0.4,
   storageCap: 16,
   cam: 'NAVCAM' as CamId, camYaw: 0, camPitch: -0.12, zoom: 1,
   thermalView: false,
@@ -70,10 +73,9 @@ export function logMars(key: string, instrument: string, summary: string) {
   const isNew = g.addEvidence('mars', { key, instrument, location: marsZoneName(rover.x, rover.z), summary });
   if (isNew && MARS_TASKS.some((t) => t.id === key)) {
     const t = MARS_TASKS.find((x) => x.id === key)!;
-    toast('EVIDENCE COLLECTED', `${CAT_BY_ID[t.cat].num} · ${t.label}`, 'evidence');
+    queueDiscovery('mars', t.cat);
     const n = Object.keys(useGame.getState().marsEvidence).length;
     if (n === 1) radio('ROVER OPS — CAPCOM', 'First Martian evidence downlinked. Beautiful data. Keep an eye on battery and slip.');
-    if (n === 8 && rover.stormPhase === 'none') startStorm();
     if (worldProgress('mars').tasksDone === worldProgress('mars').tasksTotal) radio('MISSION CONTROL', 'All Mars field evidence collected. Record interpretations in the Checklist app to complete each category.');
   }
   return isNew;
@@ -141,6 +143,7 @@ export const instruments = {
     const onboard = g.photos.filter((p) => p.world === 'mars' && p.onboard).length;
     if (onboard >= rover.storageCap) { toast('STORAGE FULL', 'Onboard image storage full. Downlink images in the Archive app.', 'warn'); audio.warning(); return; }
     if (!rover.canvas) return;
+    photoWithFX(() => {
     audio.shutter();
     const thumb = captureThumb(rover.canvas);
     const pois = poisInView();
@@ -157,7 +160,8 @@ export const instruments = {
       logMars(`photo:${p.id}`, camName, `IMAGE ${String(photo.id).padStart(4, '0')}`);
     });
     g.addJournal({ world: 'mars', kind: 'photo', title: `IMAGE ${String(photo.id).padStart(4, '0')} (${rover.cam})`, text: `${marsZoneName(rover.x, rover.z)}${pois.length ? ' — subjects: ' + pois.map((p) => p.name).join(', ') : ''}. Stored onboard; awaiting downlink.` });
-    toast(`IMAGE ${String(photo.id).padStart(4, '0')} captured`, pois.length ? pois.map((p) => p.name).join(', ') : 'No catalogued target in frame', 'info');
+    return { thumb, label: first ? first.name : 'Photo saved' };
+    });
   },
   calibrate() {
     return command('MULTISPECTRAL CALIBRATION', 3500, 0.6, () => {
@@ -457,7 +461,7 @@ export function stepRover(dtRaw: number) {
       while (err > Math.PI) err -= Math.PI * 2;
       while (err < -Math.PI) err += Math.PI * 2;
       steerCmd = Math.max(-1, Math.min(1, err * 2));
-      targetV = Math.abs(err) > 0.6 ? 0 : V_MAX * 0.6 * Math.min(1, dist / 6);
+      targetV = Math.abs(err) > 0.6 ? 0 : V_MAX * rover.autoSpeed * Math.min(1, dist / 6);
       if (dist < 2.5) {
         rover.wpIndex++;
         audio.tone(1500, 0.08, 'sine', 0.05);
@@ -544,7 +548,7 @@ export function stepRover(dtRaw: number) {
   if (canDrive && !rover.stuck) {
     if (Math.abs(rover.v) > 0.05) rover.heading += steerCmd * rover.v * dt * 0.28;
     else if (Math.abs(steerCmd) > 0 && targetV === 0 && rover.mode !== 'AUTONAV' && !rover.cmd.brake) rover.heading += steerCmd * 0.35 * dt;
-    else if (rover.mode === 'AUTONAV') rover.heading += steerCmd * 0.4 * dt;
+    else if (rover.mode === 'AUTONAV') rover.heading += steerCmd * rover.autoTurn * dt;
   }
   rover.steer += (steerCmd - rover.steer) * Math.min(1, dt * 4);
   let nx = rover.x + fx * move, nz = rover.z + fz * move;

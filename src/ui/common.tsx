@@ -77,3 +77,20 @@ export function useMissionClock() {
   const h = Math.floor(el / 3600000), m = Math.floor((el % 3600000) / 60000), s = Math.floor((el % 60000) / 1000);
   return `T+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
+
+/** ROVI — the friendly helper robot. */
+export function Rovi({ size = 44 }: { size?: number }) {
+  return (
+    <svg className="rovi" width={size} height={size} viewBox="0 0 48 48">
+      <line x1="24" y1="4" x2="24" y2="10" stroke="#4fd1c5" strokeWidth="2" />
+      <circle cx="24" cy="4" r="2.5" fill="#f0a830" />
+      <rect x="8" y="10" width="32" height="24" rx="8" fill="#e8eef0" />
+      <rect x="12" y="14" width="24" height="14" rx="5" fill="#13212a" />
+      <ellipse className="rovi-eye" cx="19" cy="21" rx="3" ry="3.5" fill="#4fd1c5" />
+      <ellipse className="rovi-eye" cx="29" cy="21" rx="3" ry="3.5" fill="#4fd1c5" />
+      <rect x="15" y="36" width="18" height="6" rx="3" fill="#9fb3b6" />
+      <circle cx="14" cy="44" r="3" fill="#56666b" />
+      <circle cx="34" cy="44" r="3" fill="#56666b" />
+    </svg>
+  );
+}

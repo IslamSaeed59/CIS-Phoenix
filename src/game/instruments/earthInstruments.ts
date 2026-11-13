@@ -7,6 +7,9 @@ import { EARTH_POIS, EARTH_POI_BY_ID, EARTH_ZONES, EARTH_TASKS, type EarthPOI } 
 import { zoneAt, surfaceAt, getQaidamHF } from '../environments/qaidam/qaidamTerrain';
 import { sharedUniforms, thermalIndex } from '../core/shaders';
 import { CAT_BY_ID } from '../../data/scientific-checklist/categories';
+import { queueDiscovery } from '../core/discovery';
+import { photoWithFX } from '../core/fx';
+import { playFP } from '../player/fpAnim';
 import type { Heightfield } from '../core/terrain';
 
 export const TOOLS: { id: ToolId; key: string; name: string; short: string; range: number; desc: string }[] = [
@@ -39,8 +42,7 @@ export function logEvidence(key: string, instrument: string, summary: string) {
   const isNew = g.addEvidence('earth', { key, instrument, location: earthLocation(), summary });
   if (isNew && EARTH_TASKS.some((t) => t.id === key)) {
     const task = EARTH_TASKS.find((t) => t.id === key)!;
-    toast('EVIDENCE COLLECTED', `${CAT_BY_ID[task.cat].num} · ${task.label}`, 'evidence');
-    afterEvidence();
+    queueDiscovery('earth', task.cat);
   }
   return isNew;
 }
@@ -117,6 +119,7 @@ export function useTool(camera: THREE.PerspectiveCamera, gl: THREE.WebGLRenderer
   const day = g.earthTime === 'day';
 
   if (tool === 'camera') {
+    photoWithFX(() => {
     audio.shutter();
     const thumb = captureThumb(gl.domElement);
     const pois = poisInFrame(camera, hf);
@@ -129,6 +132,8 @@ export function useTool(camera: THREE.PerspectiveCamera, gl: THREE.WebGLRenderer
     g.addJournal({ world: 'earth', kind: 'photo', title: `IMAGE ${String(photo.id).padStart(4, '0')}`, text: `${loc}${pois.length ? ' — subjects: ' + pois.map((p) => EARTH_POI_BY_ID[p].name).join(', ') : ''}` });
     ui.setLastPhoto(photo.id);
     ui.setReadout({ title: `IMAGE ${String(photo.id).padStart(4, '0')} SAVED`, lines: [pois.length ? `Subjects: ${pois.map((p) => EARTH_POI_BY_ID[p].name).join(', ')}` : 'No catalogued subject in frame', 'Tablet → Gallery to caption/categorise'], t: Date.now() });
+    return { thumb, label: pois.length ? EARTH_POI_BY_ID[pois[0]].name : 'Photo saved' };
+    });
     return;
   }
 
@@ -252,7 +257,16 @@ export function useTool(camera: THREE.PerspectiveCamera, gl: THREE.WebGLRenderer
   }
 
   if (tool === 'probe') {
-    audio.thud();
+    // Push the probe into the ground first, then show the result
+    if (!playFP('probe', 1300, runtime.pitch, () => probeResult(loc))) return;
+    return;
+  }
+}
+
+function probeResult(loc: string) {
+  const g = useGame.getState();
+  const ui = useUI.getState();
+  {
     const surf = surfaceAt(runtime.pos.x, runtime.pos.z);
     const kPa = surf === 'salt' ? 420 + Math.random() * 120 : surf === 'sand' ? 35 + Math.random() * 20 : surf === 'gravel' ? 260 + Math.random() * 80 : 330 + Math.random() * 90;
     const sink = surf === 'sand' ? 4 + Math.random() * 3 : surf === 'salt' ? 0.3 : 0.8;

@@ -80,7 +80,7 @@ export function ReportApp({ onSubmit }: { onSubmit: () => void }) {
         )}
         {g.reportSubmitted && <button className="btn amber" onClick={onSubmit}>Replay final cinematic</button>}
       </div>
-      {!ready && <div className="tiny amber" style={{ marginTop: 8 }}>Requires: both checklists complete, all comparison statements classified, ≥ 2 simulations run, ≥ 3 applications selected.</div>}
+      {!ready && <div className="tiny amber" style={{ marginTop: 8 }}>Finish Earth, Mars, and answer all 8 “Same or different?” questions in Compare.</div>}
     </div>
   );
 }

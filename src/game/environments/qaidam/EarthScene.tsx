@@ -13,6 +13,8 @@ import { TOOLS, useTool, poiRadius, logEvidence } from '../../instruments/earthI
 import { sharedUniforms } from '../../core/shaders';
 import { EarthHUD } from '../../../ui/hud/EarthHUD';
 import { GuideBeacon } from '../../missions/GuideBeacon';
+import { FirstPersonRig } from '../../player/FirstPersonRig';
+import { playFP } from '../../player/fpAnim';
 import { nextEarthStep } from '../../missions/earthGuide';
 import { travelTo } from '../../missions/travel';
 
@@ -130,10 +132,10 @@ function useEarthKeys() {
       const ui = useUI.getState();
       const g = useGame.getState();
       if (e.code === 'Escape') {
-        if (ui.panel && ui.panel !== 'pause' && ui.panel !== 'rest') { ui.setPanel(null); ui.setInspect(null); audio.ui('close'); }
+        if (ui.panel && ui.panel !== 'pause' && ui.panel !== 'rest' && ui.panel !== 'discovery') { ui.setPanel(null); ui.setInspect(null); audio.ui('close'); }
         return;
       }
-      if (ui.panel === 'pause' || ui.panel === 'rest' || ui.panel === 'inspect') return;
+      if (ui.panel === 'pause' || ui.panel === 'rest' || ui.panel === 'inspect' || ui.panel === 'discovery') return;
       if (matches(e, 'checklist')) { e.preventDefault(); toggleTablet('checklist'); return; }
       if (matches(e, 'journal')) { toggleTablet('journal'); return; }
       if (matches(e, 'map')) { toggleTablet('map'); return; }
@@ -155,9 +157,8 @@ function useEarthKeys() {
           return;
         }
         if (t.inspectable) {
-          audio.ui('open');
-          ui.setInspect(t.id);
-          ui.setPanel('inspect');
+          ui.setRaised(false);
+          playFP('kneel', 550, runtime.pitch, () => { audio.ui('open'); ui.setInspect(t.id); ui.setPanel('inspect'); });
         }
         return;
       }
@@ -198,6 +199,7 @@ function Scene() {
       <PlayerController hf={hf} obstacles={OBSTACLES} bounds={{ radius: PLAY_RADIUS - 15 }} surfaceAt={surfaceAt} walk={6.5} sprint={13} />
       <Systems />
       <GuideBeacon hf={hf} />
+      <FirstPersonRig />
     </>
   );
 }
@@ -214,7 +216,7 @@ export function EarthScene() {
     fadeTo(0, 1500);
     const first = Object.keys(g.earthEvidence).length === 0;
     if (first) {
-      setTimeout(() => radio('FIELD ASSISTANT', 'Welcome to Qaidam. Follow the cyan light — it always shows your next goal.'), 1800);
+      setTimeout(() => radio('ROVI', 'Hi, I am ROVI! Follow the cyan light — it shows where to go.'), 1800);
     }
     return () => { audio.stopLoop('wind'); };
   }, []);

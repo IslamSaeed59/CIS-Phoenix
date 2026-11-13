@@ -11,7 +11,7 @@ export interface ComparisonStatement {
 }
 
 /** Statements the player must classify. Facts are general, well-established planetary-science knowledge. */
-export const COMPARISON_STATEMENTS: ComparisonStatement[] = [
+const ALL_STATEMENTS: ComparisonStatement[] = [
   { id: 'c1', cat: 'geology', text: 'Both sites contain sulfate- and/or chloride-bearing deposits associated with evaporation of water.', answer: 'similarity', why: 'Evaporite minerals occur in Qaidam and have been detected on Mars from orbit and by rovers.' },
   { id: 'c2', cat: 'geology', text: 'Martian bedrock is dominated by basaltic (mafic) compositions; Qaidam basin fill is mostly eroded continental sediment.', answer: 'difference', why: 'Source rocks differ: Mars has a largely basaltic crust.' },
   { id: 'c3', cat: 'terrain', text: 'Both landscapes contain wind-streamlined ridges (yardangs or yardang-like forms).', answer: 'similarity', why: 'Yardangs occur in Qaidam and in several regions of Mars.' },
@@ -29,6 +29,9 @@ export const COMPARISON_STATEMENTS: ComparisonStatement[] = [
   { id: 'c15', cat: 'operations', text: 'Earth field teams can react instantly; Mars operations face multi-minute one-way signal delays.', answer: 'difference', why: 'Light-time delay ranges from roughly 3 to 22 minutes one-way.' },
   { id: 'c16', cat: 'operations', text: 'Earth analogue tests cannot reproduce Mars gravity, atmosphere and radiation simultaneously.', answer: 'limitation', why: 'Analogues represent selected aspects only.' },
 ];
+
+/** The 8 statements shown to the player — one per category, mixed answers. */
+export const COMPARISON_STATEMENTS: ComparisonStatement[] = ['c1', 'c3', 'c6', 'c7', 'c9', 'c11', 'c14', 'c15'].map((id) => ALL_STATEMENTS.find((x) => x.id === id)!);
 
 export interface Application {
   id: string;

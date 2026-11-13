@@ -6,6 +6,7 @@ import { RoverModel, MAST_HEAD } from '../rover/Rover';
 import { rover, stepRover, CAMS } from '../rover/roverSim';
 import { sharedUniforms } from '../core/shaders';
 import { useGame } from '../core/store';
+import { fxState } from '../core/fx';
 
 export const feedState = { cine: 0, exposure: 0, blur: 0 };
 
@@ -68,7 +69,9 @@ function CameraRig() {
     smoothQ.current.slerp(q, 1 - Math.exp(-dt * 9)); // slight mechanical stabilisation lag
     cam.position.copy(smoothP.current);
     cam.quaternion.copy(smoothQ.current);
-    cam.fov += (fov - cam.fov) * Math.min(1, dt * 6);
+    fxState.zoom += (fxState.zoomTarget - fxState.zoom) * Math.min(1, dt * 14);
+    fov *= 1 - 0.45 * fxState.zoom;
+    cam.fov += (fov - cam.fov) * Math.min(1, dt * (fxState.zoomTarget > 0 ? 18 : 6));
     cam.near = 0.05;
     cam.updateProjectionMatrix();
     rover.camPos.copy(cam.position);

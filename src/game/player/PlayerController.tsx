@@ -5,6 +5,8 @@ import { isDown } from '../core/input';
 import { useGame } from '../core/store';
 import { useUI, toast } from '../core/ui';
 import { audio } from '../core/audio';
+import { fxState } from '../core/fx';
+import { fpAnim, fpProgress, tickFP, crouch } from './fpAnim';
 import type { Heightfield } from '../core/terrain';
 
 export const runtime = {
@@ -129,7 +131,10 @@ export function PlayerController({
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
     const ui = useUI.getState();
-    const active = !ui.panel || ui.panel === 'photoTag';
+    tickFP();
+    const fk = fpProgress();
+    const animating = fk >= 0;
+    const active = (!ui.panel || ui.panel === 'photoTag') && !animating;
     const p = runtime.pos;
 
     // Movement input
@@ -213,7 +218,12 @@ export function PlayerController({
 
     // Camera
     const cam = camera as THREE.PerspectiveCamera;
-    const eyePos = new THREE.Vector3(p.x, p.y + eye + bobY, p.z);
+    const cr = crouch(fk, fpAnim.type);
+    const eyePos = new THREE.Vector3(p.x, p.y + eye + bobY - cr * 0.75, p.z);
+    // photo zoom
+    fxState.zoom += (fxState.zoomTarget - fxState.zoom) * Math.min(1, dt * 14);
+    const wantFov = useGame.getState().settings.fov * (1 - 0.4 * fxState.zoom);
+    if (Math.abs(cam.fov - wantFov) > 0.05) { cam.fov = wantFov; cam.updateProjectionMatrix(); }
     if (useUI.getState().thirdPerson) {
       const back = new THREE.Vector3(Math.sin(runtime.yaw) * Math.cos(runtime.pitch), -Math.sin(runtime.pitch), Math.cos(runtime.yaw) * Math.cos(runtime.pitch));
       const desired = eyePos.clone().addScaledVector(back, 4.2).add(new THREE.Vector3(tmp.r.x * 0.6, 0.35, tmp.r.z * 0.6));
@@ -228,7 +238,7 @@ export function PlayerController({
       cam.rotation.set(0, 0, 0);
       cam.rotation.order = 'YXZ';
       cam.rotation.y = runtime.yaw;
-      cam.rotation.x = runtime.pitch;
+      cam.rotation.x = animating && fpAnim.type !== 'kneel' ? fpAnim.pitch0 + (-0.95 - fpAnim.pitch0) * cr : animating ? runtime.pitch + (-0.55 - runtime.pitch) * cr : runtime.pitch;
       cam.rotation.z = -bobX * 0.15;
     }
 

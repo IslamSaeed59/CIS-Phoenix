@@ -86,28 +86,14 @@ export const MARS_POIS: MarsPOI[] = [
 export const MARS_POI_BY_ID = Object.fromEntries(MARS_POIS.map((p) => [p.id, p])) as Record<string, MarsPOI>;
 
 export const MARS_TASKS: Task[] = [
-  { id: 'photo:m-layers', cat: 'geology', kind: 'field', label: 'Mast-camera image of the layered outcrop', hint: 'Drive within ~120 m of the outcrop, switch to MASTCAM, frame it and capture.' },
-  { id: 'multispec:m-boulder', cat: 'geology', kind: 'field', label: 'Multispectral image of a dark boulder', hint: 'Calibrate first (Instruments → Calibration target), then aim at the boulder field.' },
-  { id: 'spectro:m-layers', cat: 'geology', kind: 'field', label: 'Contact spectrometer on the layered outcrop', hint: 'Stop within 6 m of the outcrop and deploy the arm spectrometer.' },
-  { id: 'scan:terrain', cat: 'terrain', kind: 'field', label: 'Stereo terrain model from navigation cameras', hint: 'Instruments → Navcam Stereo Terrain Scan.' },
-  { id: 'hazard:mars', cat: 'terrain', kind: 'analysis', label: 'Mark a hazard on the Martian terrain model', hint: 'Navigation app → Terrain model → click a red slope cell.' },
-  { id: 'photo:m-crater', cat: 'terrain', kind: 'field', label: 'Image the small impact crater', hint: 'Capture the crater rim with any camera.' },
-  { id: 'thermal:m-dunes:day', cat: 'temperature', kind: 'field', label: 'Daytime TIR reading: loose sand', hint: 'Thermal instrument, daytime, aimed at the ripple field.' },
-  { id: 'thermal:m-boulder:day', cat: 'temperature', kind: 'field', label: 'Daytime TIR reading: dark rock', hint: 'Thermal instrument aimed at the boulder field.' },
-  { id: 'thermal:night', cat: 'temperature', kind: 'field', label: 'Night-time TIR reading of any surveyed target', hint: 'Use "Wait until night" (costs battery for heaters) then take a reading.' },
-  { id: 'multispec:m-layers', cat: 'water', kind: 'field', label: 'Multispectral: hydration indicators in layered outcrop', hint: 'Calibrated multispectral image of the layered outcrop.' },
-  { id: 'spectro:m-veins', cat: 'water', kind: 'field', label: 'Contact spectrometer on the vein network', hint: 'Stop within 6 m of the bright veins and deploy the spectrometer.' },
-  { id: 'photo:m-veins', cat: 'water', kind: 'field', label: 'Image the vein network', hint: 'Capture the veins (Hazcam or Mastcam).' },
-  { id: 'scan:wind', cat: 'dust', kind: 'field', label: 'Wind & dust sensor reading', hint: 'Instruments → Environmental sensors → Wind/Dust.' },
-  { id: 'photo:m-dunes', cat: 'dust', kind: 'field', label: 'Image the ripple field', hint: 'Capture the ripples (approach carefully).' },
-  { id: 'diag:dust', cat: 'dust', kind: 'analysis', label: 'Assess solar-panel dust loading', hint: 'Press R (Diagnostics) and run the power-system check.' },
-  { id: 'scan:env', cat: 'biology', kind: 'field', label: 'UV / humidity / pressure environmental reading', hint: 'Instruments → Environmental sensors → Habitability suite.' },
-  { id: 'analyze:organics', cat: 'biology', kind: 'analysis', label: 'Onboard organic-screening of outcrop data (simulated)', hint: 'Requires the outcrop spectrometer data. Instruments → Sample analysis.' },
-  { id: 'gpr:traverse', cat: 'subsurface', kind: 'field', label: 'GPR traverse (drive ≥ 30 m with GPR active)', hint: 'Enable GPR in Instruments and drive.' },
-  { id: 'photo:m-pit', cat: 'subsurface', kind: 'field', label: 'Image the candidate collapse pit (keep safe distance)', hint: 'Approach no closer than the pit rim; capture an image.' },
-  { id: 'drive:150', cat: 'operations', kind: 'field', label: 'Accumulate 150 m of drive odometry', hint: 'Drive the rover.' },
-  { id: 'autonav:route', cat: 'operations', kind: 'field', label: 'Complete an autonomous waypoint route', hint: 'Navigation app: place waypoints and Execute route.' },
-  { id: 'recover:fault', cat: 'operations', kind: 'analysis', label: 'Diagnose and recover from a mobility fault', hint: 'Faults happen in soft sand or on steep slopes. Use diagnostics/recovery.' },
+  { id: 'photo:m-crater', cat: 'terrain', kind: 'field', label: 'Photograph the crater', hint: 'Station 1 · Crater' },
+  { id: 'photo:m-dunes', cat: 'dust', kind: 'field', label: 'Photograph the sand ripples', hint: 'Station 2 · Sand ripples' },
+  { id: 'thermal:m-dunes:day', cat: 'temperature', kind: 'field', label: 'Measure the sand temperature', hint: 'Station 2 · Sand ripples' },
+  { id: 'recover:fault', cat: 'operations', kind: 'field', label: 'Test the soft sand and get unstuck', hint: 'Station 2 · Sand ripples' },
+  { id: 'spectro:m-layers', cat: 'geology', kind: 'field', label: 'Touch the layered rock with the arm', hint: 'Station 3 · Layered rock' },
+  { id: 'multispec:m-layers', cat: 'water', kind: 'field', label: 'Colour-scan the layered rock', hint: 'Station 3 · Layered rock' },
+  { id: 'scan:env', cat: 'biology', kind: 'field', label: 'Measure air, UV and humidity', hint: 'Station 3 · Layered rock' },
+  { id: 'photo:m-pit', cat: 'subsurface', kind: 'field', label: 'Photograph the mysterious pit', hint: 'Station 4 · Pit' },
 ];
 
 export const MARS_INTERP: Record<CategoryId, InterpSet> = {

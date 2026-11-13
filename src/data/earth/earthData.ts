@@ -269,41 +269,14 @@ export const EARTH_POIS: EarthPOI[] = [
 export const EARTH_POI_BY_ID = Object.fromEntries(EARTH_POIS.map((p) => [p.id, p])) as Record<string, EarthPOI>;
 
 export const EARTH_TASKS: Task[] = [
-  // 01 Geology
-  { id: 'inspect:playa-polygons', cat: 'geology', kind: 'field', label: 'Inspect the polygonal salt crust (Zone A)', hint: 'Walk to the polygonal crust in Dalangtan Playa and press E to inspect.' },
-  { id: 'sample:playa-crust', cat: 'geology', kind: 'field', label: 'Collect a salt-crust sample', hint: 'Inspect the flagged sample site in Zone A and use "Collect sample".' },
-  { id: 'spectral:strata-cliff', cat: 'geology', kind: 'field', label: 'Spectral scan of the layered escarpment', hint: 'Equip the Spectral Scanner [2], aim at the escarpment in Zone D and click.' },
-  { id: 'lab:playa-crust', cat: 'geology', kind: 'analysis', label: 'Field-lab analysis of the salt-crust sample', hint: 'Open the tablet (Tab) → LAB and run the analysis.' },
-  // 02 Terrain
-  { id: 'scan:terrain:yardang', cat: 'terrain', kind: 'field', label: 'LiDAR terrain scan of the yardang field', hint: 'Equip Terrain LiDAR [4] in Zone B and click to scan.' },
-  { id: 'photo:yardang-major', cat: 'terrain', kind: 'field', label: 'Photograph the large yardang', hint: 'Equip the Field Camera [1], frame the large yardang and click.' },
-  { id: 'hazard:earth', cat: 'terrain', kind: 'analysis', label: 'Mark a rover navigation hazard on the topographic model', hint: 'Tablet → SCANS: open your terrain model and click a steep (red) slope cell.' },
-  // 03 Temperature
-  { id: 'thermal:playa-crust:day', cat: 'temperature', kind: 'field', label: 'Daytime thermal reading: salt crust', hint: 'Thermal Camera [3], daytime, aim at the salt crust sample site and click.' },
-  { id: 'thermal:dark-gravel:day', cat: 'temperature', kind: 'field', label: 'Daytime thermal reading: dark gravel surface', hint: 'Thermal Camera [3], daytime, aim at the dark gravel lag and click.' },
-  { id: 'thermal:night', cat: 'temperature', kind: 'field', label: 'Night-time thermal reading of any surveyed surface', hint: 'Rest at the camp shelter until night, then take a thermal reading of any surveyed site.' },
-  // 04 Water
-  { id: 'inspect:halite-mounds', cat: 'water', kind: 'field', label: 'Inspect the halite mounds (Zone C)', hint: 'Press E at the halite mounds.' },
-  { id: 'inspect:dry-channel', cat: 'water', kind: 'field', label: 'Inspect the dry drainage channel', hint: 'Find the dry channel between Zones C and D and press E.' },
-  { id: 'sample:halite-mounds', cat: 'water', kind: 'field', label: 'Collect a halite sample', hint: 'Inspect the halite mounds and collect a sample.' },
-  { id: 'lab:halite-mounds', cat: 'water', kind: 'analysis', label: 'Field-lab analysis of the halite sample', hint: 'Tablet → LAB.' },
-  // 05 Dust
-  { id: 'scan:wind:yardang', cat: 'dust', kind: 'field', label: 'Wind measurement in the yardang field', hint: 'Environmental Suite [6] in Zone B — click to log wind data.' },
-  { id: 'inspect:yardang-major', cat: 'dust', kind: 'field', label: 'Inspect windward vs leeward sides of the yardang', hint: 'Press E at the large yardang.' },
-  { id: 'photo:ripples', cat: 'dust', kind: 'field', label: 'Photograph the sand ripples', hint: 'Field Camera [1] at the ripple corridor in Zone B.' },
-  // 06 Biology
-  { id: 'scan:env:playa', cat: 'biology', kind: 'field', label: 'Log UV / humidity conditions on the playa', hint: 'Environmental Suite [6] in Zone A.' },
-  { id: 'sample:halite-mounds', cat: 'biology', kind: 'field', label: 'Collect a halite sample (habitat for halophiles?)', hint: 'Shared with checklist 04.' },
-  { id: 'labbio:halite-mounds', cat: 'biology', kind: 'analysis', label: 'Run the biological assay (illustrative dataset)', hint: 'Tablet → LAB → Biological assay.' },
-  // 07 Subsurface
-  { id: 'scan:gpr:sediment', cat: 'subsurface', kind: 'field', label: 'Ground-penetrating radar profile in Zone D', hint: 'GPR [5] in the sedimentary zone — click to acquire a profile.' },
-  { id: 'inspect:overhang', cat: 'subsurface', kind: 'field', label: 'Inspect the erosional overhang', hint: 'Press E at the overhang at the escarpment base.' },
-  { id: 'photo:strata-cliff', cat: 'subsurface', kind: 'field', label: 'Photograph the escarpment cross-section', hint: 'Field Camera [1] facing the layered escarpment.' },
-  // 08 Operations
-  { id: 'probe:crust', cat: 'operations', kind: 'field', label: 'Penetrometer test on salt crust', hint: 'Penetrometer [7], click on the playa surface.' },
-  { id: 'probe:sand', cat: 'operations', kind: 'field', label: 'Penetrometer test on loose sand', hint: 'Penetrometer [7], click in the sand ripple corridor.' },
-  { id: 'comms:relay', cat: 'operations', kind: 'field', label: 'Communications link test', hint: 'Press E at the comms relay on the knoll east of camp.' },
-  { id: 'site:flat', cat: 'operations', kind: 'analysis', label: 'Evaluate a flat candidate operations site (scan slope < 3°)', hint: 'Run a LiDAR scan [4] on the playa; the slope statistics are evaluated automatically.' },
+  { id: 'inspect:playa-polygons', cat: 'geology', kind: 'field', label: 'Inspect the salt polygons', hint: 'Salt flat · walk to the beacon · press E' },
+  { id: 'sample:playa-crust', cat: 'water', kind: 'field', label: 'Take a salt sample', hint: 'Salt flat · press E · Collect sample' },
+  { id: 'scan:env:playa', cat: 'biology', kind: 'field', label: 'Measure UV and humidity', hint: 'Salt flat · press 6 · click' },
+  { id: 'thermal:dark-gravel:day', cat: 'temperature', kind: 'field', label: 'Measure the dark gravel temperature', hint: 'Dark gravel · press 3 · aim · click' },
+  { id: 'photo:yardang-major', cat: 'dust', kind: 'field', label: 'Photograph a wind-carved ridge', hint: 'Yardangs · press 1 · aim · click' },
+  { id: 'scan:terrain:yardang', cat: 'terrain', kind: 'field', label: 'Make a 3D map of the yardangs', hint: 'Yardangs · press 4 · click' },
+  { id: 'probe:sand', cat: 'operations', kind: 'field', label: 'Test how soft the sand is', hint: 'Sand ripples · press 7 · click' },
+  { id: 'scan:gpr:sediment', cat: 'subsurface', kind: 'field', label: 'Look under the ground with radar', hint: 'Layered cliff · press 5 · click' },
 ];
 
 export const EARTH_INTERP: Record<CategoryId, InterpSet> = {

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { audio } from './audio';
 import { useGame } from './store';
 
-export type Panel = null | 'tablet' | 'pause' | 'inspect' | 'photoTag' | 'rest';
+export type Panel = null | 'tablet' | 'pause' | 'inspect' | 'photoTag' | 'rest' | 'discovery';
 export type TabletTab = 'checklist' | 'journal' | 'map' | 'lab' | 'scans' | 'gallery';
 export type ToolId = 'camera' | 'spectral' | 'thermal' | 'lidar' | 'gpr' | 'env' | 'probe';
 

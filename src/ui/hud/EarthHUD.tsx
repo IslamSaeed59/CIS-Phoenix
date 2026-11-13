@@ -6,7 +6,9 @@ import { TOOLS } from '../../game/instruments/earthInstruments';
 import { zoneAt } from '../../game/environments/qaidam/qaidamTerrain';
 import { EARTH_ZONES } from '../../data/earth/earthData';
 import { CATEGORIES } from '../../data/scientific-checklist/categories';
-import { RadioFeed, Toasts, StatusChip, useMissionClock, Bar } from '../common';
+import { RadioFeed, Toasts, StatusChip, useMissionClock, Bar, Rovi } from '../common';
+import { totalStars } from '../../game/core/discovery';
+import { Icon } from '../icons';
 import { keyLabel } from '../../game/core/input';
 import { Tablet } from '../journal/Tablet';
 import { InspectView } from '../checklist/InspectView';
@@ -57,12 +59,11 @@ function TopBar() {
   return (
     <div className="hud-top">
       <div className="hud-block">
-        <div className="big">PD-2077 · QAIDAM ANALOGUE SURVEY</div>
-        <div className="dim" style={{ marginTop: 4 }}>{clock} · LOCAL {time === 'day' ? '14:20' : '23:10'} · {time === 'day' ? 'DAY' : 'NIGHT'}</div>
+        <div className="big">STAGE 1 · EARTH</div>
+        <div className="dim" style={{ marginTop: 4 }}>{time === 'day' ? '☀ Day' : '☾ Night'}</div>
         <div style={{ marginTop: 4 }}>
           <span className="teal">{zone ? zone.label : 'OPEN TERRAIN'}</span> {zone ? `· ${zone.name}` : ''}
         </div>
-        <div className="dim tiny" style={{ marginTop: 2 }}>GRID {runtime.pos.x.toFixed(0)}E {(-runtime.pos.z).toFixed(0)}N · ELEV {(2950 + runtime.pos.y).toFixed(0)} m (REPRESENTATIVE)</div>
       </div>
       <Compass />
       <div style={{ width: 260 }} />
@@ -76,8 +77,8 @@ function Objectives() {
   return (
     <div className="objective panel" style={{ width: 200 }}>
       <div className="between" style={{ marginBottom: 6 }}>
-        <span className="label">Earth evidence</span>
-        <span className="mono small teal">{prog.completed}/8</span>
+        <span className="label">Earth {prog.completed}/8</span>
+        <span style={{ fontSize: 15, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="star" size={16} color="#ffd166" />{totalStars(s.stars)}</span>
       </div>
       <Bar v={prog.tasksDone / prog.tasksTotal} />
       <div className="tiny dim" style={{ marginTop: 6 }}><span className="kbd">{keyLabel(s.settings.keys.checklist)}</span> full checklist</div>
@@ -100,7 +101,8 @@ function NextStep() {
   }
   const near = dist !== null && dist < 12;
   return (
-    <div className="panel" style={{ position: 'fixed', top: 58, left: '50%', transform: 'translateX(-50%)', padding: '9px 16px', minWidth: 360, maxWidth: 560, display: 'flex', gap: 14, alignItems: 'center', borderTop: '2px solid var(--teal)', pointerEvents: 'none' }}>
+    <div className="panel" style={{ position: 'fixed', top: 58, left: '50%', transform: 'translateX(-50%)', padding: '9px 16px', minWidth: 380, maxWidth: 600, display: 'flex', gap: 14, alignItems: 'center', borderTop: '2px solid var(--teal)', borderRadius: 10, pointerEvents: 'none' }}>
+      <Rovi />
       {step.target && (
         <div style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
           {near ? <span className="teal" style={{ fontSize: 22 }}>◎</span> : (
@@ -111,8 +113,8 @@ function NextStep() {
         </div>
       )}
       <div style={{ flex: 1 }}>
-        <div className="mono tiny teal" style={{ letterSpacing: '0.2em' }}>NEXT{dist !== null ? ` · ${near ? 'YOU ARE HERE' : Math.round(dist) + ' m'}` : ''}</div>
-        <div style={{ fontSize: 15, fontWeight: 600, marginTop: 2 }}>{step.text}</div>
+        <div className="mono tiny teal" style={{ letterSpacing: '0.2em' }}>ROVI · NEXT{dist !== null ? ` · ${near ? 'YOU ARE HERE' : Math.round(dist) + ' m'}` : ''}</div>
+        <div className="kid" style={{ fontSize: 18, fontWeight: 600, marginTop: 2 }}>{step.text}</div>
         <div className="small dim" style={{ marginTop: 1 }}>{step.how}</div>
       </div>
       {dist !== null && dist > 40 && (
@@ -126,12 +128,14 @@ function NextStep() {
 }
 
 function Hotbar() {
+  useTick(400);
+  const want = nextEarthStep().tool;
   const tool = useUI((s) => s.tool);
   const raised = useUI((s) => s.toolRaised);
   return (
     <div className="hotbar">
       {TOOLS.map((t) => (
-        <div key={t.id} className={`slot ${tool === t.id ? 'sel' : ''}`} style={tool === t.id && raised ? { boxShadow: '0 0 0 1px var(--teal) inset' } : undefined}>
+        <div key={t.id} className={`slot ${tool === t.id ? 'sel' : ''} ${want === t.key && tool !== t.id ? 'pulse-key' : ''}`} style={tool === t.id && raised ? { boxShadow: '0 0 0 1px var(--teal) inset' } : undefined}>
           <span className="k">{t.key}</span>
           <span>{t.short}</span>
         </div>

@@ -7,19 +7,15 @@ export interface GuideStep {
   how: string; // which key / action
   target?: [number, number]; // world x,z for the beacon
   place?: string; // name of the place
+  tool?: string; // hotbar key to highlight
 }
 
 // A route through the basin that keeps walking short: camp → playa → salt pan → channel → cliffs → yardangs → relay → night.
 const ORDER = [
-  'inspect:playa-polygons', 'scan:env:playa', 'probe:crust', 'sample:playa-crust', 'thermal:playa-crust:day', 'site:flat',
+  'inspect:playa-polygons', 'sample:playa-crust', 'scan:env:playa',
   'thermal:dark-gravel:day',
-  'inspect:halite-mounds', 'sample:halite-mounds',
-  'inspect:dry-channel',
-  'inspect:overhang', 'photo:strata-cliff', 'spectral:strata-cliff', 'scan:gpr:sediment',
-  'inspect:yardang-major', 'photo:yardang-major', 'scan:terrain:yardang', 'scan:wind:yardang', 'photo:ripples', 'probe:sand',
-  'comms:relay',
-  'lab:playa-crust', 'lab:halite-mounds', 'labbio:halite-mounds', 'hazard:earth',
-  'thermal:night',
+  'scan:gpr:sediment',
+  'photo:yardang-major', 'scan:terrain:yardang', 'probe:sand',
 ];
 
 const poiPos = (id: string): [number, number] => EARTH_POI_BY_ID[id].pos;
@@ -66,7 +62,16 @@ function stepFor(key: string, isDay: boolean): GuideStep {
   return { text: 'Continue the survey', how: 'Press Tab for the checklist' };
 }
 
+function withTool(st: GuideStep): GuideStep {
+  const m = st.how.match(/press ([1-7])/i);
+  return m ? { ...st, tool: m[1] } : st;
+}
+
 export function nextEarthStep(): GuideStep {
+  return withTool(rawNext());
+}
+
+function rawNext(): GuideStep {
   const s = useGame.getState();
   const ev = s.earthEvidence;
   const isDay = s.earthTime === 'day';
