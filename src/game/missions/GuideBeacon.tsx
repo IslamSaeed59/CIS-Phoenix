@@ -6,7 +6,7 @@ import { runtime } from '../player/PlayerController';
 import { nextEarthStep } from './earthGuide';
 
 /** A tall cyan light pillar + ground ring marking the next objective. */
-export function GuideBeacon({ hf }: { hf: Heightfield }) {
+export function GuideBeacon({ hf, getTarget }: { hf: Heightfield; getTarget?: () => [number, number] | null }) {
   const group = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
   const pillar = useRef<THREE.Mesh>(null);
@@ -33,9 +33,9 @@ export function GuideBeacon({ hf }: { hf: Heightfield }) {
   const target = useRef<[number, number] | null>(null);
   useFrame(({ clock }, dt) => {
     acc.current += dt;
-    if (acc.current > 0.4) {
+    if (acc.current > (getTarget ? 0.1 : 0.4)) {
       acc.current = 0;
-      target.current = nextEarthStep().target ?? null;
+      target.current = getTarget ? getTarget() : nextEarthStep().target ?? null;
     }
     const g = group.current;
     if (!g) return;

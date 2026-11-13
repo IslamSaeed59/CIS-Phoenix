@@ -5,7 +5,7 @@ import { ChecklistView } from '../checklist/ChecklistView';
 import { GalleryView, JournalView, ScansView } from './Views';
 import { audio } from '../../game/core/audio';
 import { renderReliefMap } from '../../game/core/terrain';
-import { getQaidamHF, PLAY_SIZE, CHANNEL, sandWeight } from '../../game/environments/qaidam/qaidamTerrain';
+import { getQaidamHF, PLAY_SIZE, CHANNEL, sandWeight, QAIDAM_RES } from '../../game/environments/qaidam/qaidamTerrain';
 import { EARTH_POIS, EARTH_POI_BY_ID, EARTH_ZONES } from '../../data/earth/earthData';
 import { runtime } from '../../game/player/PlayerController';
 import { logEvidence } from '../../game/instruments/earthInstruments';
@@ -13,7 +13,7 @@ import { Bar } from '../common';
 import { travelTo } from '../../game/missions/travel';
 import { nextEarthStep } from '../../game/missions/earthGuide';
 
-const RES = { low: 220, medium: 300, high: 400 } as const;
+const RES = QAIDAM_RES;
 
 let reliefCache: HTMLCanvasElement | null = null;
 export function earthRelief() {

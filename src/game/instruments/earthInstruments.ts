@@ -4,7 +4,7 @@ import { useUI, toast, radio, type ToolId } from '../core/ui';
 import { audio } from '../core/audio';
 import { runtime } from '../player/PlayerController';
 import { EARTH_POIS, EARTH_POI_BY_ID, EARTH_ZONES, EARTH_TASKS, type EarthPOI } from '../../data/earth/earthData';
-import { zoneAt, surfaceAt, getQaidamHF } from '../environments/qaidam/qaidamTerrain';
+import { zoneAt, surfaceAt, getQaidamHF, QAIDAM_RES } from '../environments/qaidam/qaidamTerrain';
 import { sharedUniforms, thermalIndex } from '../core/shaders';
 import { CAT_BY_ID } from '../../data/scientific-checklist/categories';
 import { queueDiscovery } from '../core/discovery';
@@ -59,7 +59,7 @@ function afterEvidence() {
 
 /** Angle-based target acquisition from the camera. */
 export function aimedPOI(camera: THREE.Camera, range: number, extraDeg = 4): EarthPOI | null {
-  const hf = getQaidamHF(useGame.getState().settings.quality === 'high' ? 400 : useGame.getState().settings.quality === 'medium' ? 300 : 220);
+  const hf = getQaidamHF(QAIDAM_RES[useGame.getState().settings.quality]);
   const fwd = new THREE.Vector3();
   camera.getWorldDirection(fwd);
   let best: EarthPOI | null = null, bestScore = Infinity;

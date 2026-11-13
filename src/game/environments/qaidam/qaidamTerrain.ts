@@ -196,6 +196,9 @@ export function surfaceAt(x: number, z: number): 'salt' | 'sand' | 'gravel' | 'h
 
 let _hf: Heightfield | null = null;
 let _hfRes = 0;
+/** Terrain mesh resolution for each detail level (shared by the world, tools and maps). */
+export const QAIDAM_RES = { low: 220, medium: 300, high: 400, ultra: 480 } as const;
+
 export function getQaidamHF(res: number) {
   if (!_hf || _hfRes !== res) {
     _hf = new Heightfield(PLAY_SIZE, res, qaidamHeight);

@@ -10,7 +10,35 @@ import { IntroScene } from './game/environments/space/IntroScene';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { DiscoveryCard } from './ui/DiscoveryCard';
 import { PhotoOverlay, Banner } from './ui/FX';
+import { PerfNotice } from './ui/PerfNotice';
+import { startPerfMonitor } from './game/core/perf';
 
+function webglAvailable() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl2') || c.getContext('webgl');
+    (gl as any)?.getExtension('WEBGL_lose_context')?.loseContext();
+    return !!gl;
+  } catch { return false; }
+}
+
+function NoWebGL() {
+  return (
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#05080a' }}>
+      <div className="window" style={{ width: 'min(520px, 92vw)', padding: 24 }}>
+        <div className="win-title" style={{ color: 'var(--amber)' }}>3D graphics unavailable</div>
+        <p className="small" style={{ lineHeight: 1.7 }}>
+          This game needs WebGL, which your browser can't use right now. Try: turning on <b>hardware acceleration</b> in your browser settings,
+          updating your graphics driver, or opening the game in a recent Chrome, Edge or Firefox.
+        </p>
+        <button className="btn primary" onClick={() => location.reload()}>Try again</button>
+      </div>
+    </div>
+  );
+}
+
+const Assessment = lazy(() => import('./ui/onboarding/Assessment').then((m) => ({ default: m.Assessment })));
+const TutorialScene = lazy(() => import('./ui/onboarding/TutorialScene').then((m) => ({ default: m.TutorialScene })));
 const EarthScene = lazy(() => import('./game/environments/qaidam/EarthScene').then((m) => ({ default: m.EarthScene })));
 const HQScene = lazy(() => import('./game/environments/hq/HQScene').then((m) => ({ default: m.HQScene })));
 const EndingScene = lazy(() => import('./game/environments/space/EndingScene').then((m) => ({ default: m.EndingScene })));
@@ -53,8 +81,10 @@ function TransitionToHQ() {
 export default function App() {
   const phase = useGame((s) => s.phase);
   const [booted, setBooted] = useState(false);
+  const [noWebGL] = useState(() => !webglAvailable());
   useEffect(() => {
     installInput();
+    startPerfMonitor();
     const v = useGame.getState().settings.volume;
     audio.setVolume(v);
   }, []);
@@ -65,12 +95,15 @@ export default function App() {
   }, [phase]);
 
   if (!booted) return <BootScreen onDone={() => setBooted(true)} />;
+  if (noWebGL) return <NoWebGL />;
 
   return (
     <ErrorBoundary>
       <Suspense fallback={<Loading label="Preparing chapter" />}>
         {phase === 'menu' && <MainMenu />}
         {phase === 'intro' && <IntroScene />}
+        {phase === 'assess' && <Assessment />}
+        {phase === 'tutorial' && <TutorialScene />}
         {phase === 'briefing' && <Briefing />}
         {phase === 'earth' && <EarthScene />}
         {phase === 'toHQ' && <TransitionToHQ />}
@@ -80,6 +113,7 @@ export default function App() {
       {phase !== 'menu' && <DiscoveryCard />}
       <PhotoOverlay />
       <Banner />
+      <PerfNotice />
       <FadeLayer />
     </ErrorBoundary>
   );

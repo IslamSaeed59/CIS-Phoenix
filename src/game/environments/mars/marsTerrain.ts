@@ -145,7 +145,7 @@ export function getMarsHF(res = 300) {
   }
   return _hf;
 }
-export const MARS_RES = { low: 220, medium: 300, high: 380 } as const;
+export const MARS_RES = { low: 220, medium: 300, high: 380, ultra: 440 } as const;
 
 export function marsZoneName(x: number, z: number) {
   const near = Object.values(MARS_POI_BY_ID)

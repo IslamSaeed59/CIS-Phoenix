@@ -1,3 +1,4 @@
+import { gfxDpr } from '../../core/graphics';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -128,7 +129,7 @@ export function EndingScene() {
   const toMenu = async () => { await fadeTo(1, 900); g.setPhase('menu'); };
   return (
     <div className="letterbox" style={{ position: 'fixed', inset: 0, background: '#000' }}>
-      <Canvas camera={{ fov: 45, near: 0.1, far: 5000 }} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}>
+      <Canvas dpr={gfxDpr(useGame.getState().settings.gfx)} gl={{ antialias: useGame.getState().settings.gfx.aa, toneMapping: THREE.ACESFilmicToneMapping }} camera={{ fov: 45, near: 0.1, far: 5000 }}>
         <color attach="background" args={['#000']} />
         <Starfield count={6000} radius={2000} />
         <ambientLight intensity={0.06} />

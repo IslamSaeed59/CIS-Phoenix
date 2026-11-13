@@ -4,9 +4,21 @@ import { CATEGORIES, type CategoryId, type Status, type Task } from '../../data/
 import { EARTH_INTERP, EARTH_TASKS } from '../../data/earth/earthData';
 import { MARS_INTERP, MARS_TASKS } from '../../data/mars/marsData';
 import { APPLICATIONS, COMPARISON_STATEMENTS, type StatementClass } from '../../data/scientific-checklist/comparison';
+import { PRESETS, type Gfx, type Preset } from './graphics';
+import type { HardwareReport } from './hardware';
+
+const DEFAULT_GFX_SETTINGS = {
+  gfx: { ...PRESETS.medium },
+  gfxAuto: true,
+  gfxCustom: false,
+  recommended: null as Gfx | null,
+  hw: null as HardwareReport | null,
+  assessDone: false,
+  tutorialDone: false,
+};
 
 export type World = 'earth' | 'mars';
-export type Phase = 'menu' | 'intro' | 'briefing' | 'earth' | 'toHQ' | 'hq' | 'ending';
+export type Phase = 'menu' | 'intro' | 'assess' | 'tutorial' | 'briefing' | 'earth' | 'toHQ' | 'hq' | 'ending';
 
 export interface EvidenceRecord {
   key: string;
@@ -81,7 +93,7 @@ export const DEFAULT_KEYS: Record<KeyAction, string> = {
 };
 
 export interface Settings {
-  quality: 'low' | 'medium' | 'high';
+  quality: Preset; // terrain mesh detail (kept in sync with gfx.terrain)
   sensitivity: number;
   volume: number;
   voice: boolean;
@@ -89,6 +101,13 @@ export interface Settings {
   fov: number;
   keys: Record<KeyAction, string>;
   subtitles: boolean;
+  gfx: Gfx;
+  gfxAuto: boolean; // let the game lower settings automatically when performance drops
+  gfxCustom: boolean; // player changed settings manually — never overwrite silently
+  recommended: Gfx | null; // what the hardware assessment recommended
+  hw: HardwareReport | null;
+  assessDone: boolean;
+  tutorialDone: boolean;
 }
 
 interface GameState {
@@ -124,6 +143,7 @@ interface GameState {
   setPhase: (p: Phase) => void;
   newGame: () => void;
   setSettings: (s: Partial<Settings>) => void;
+  applyGfx: (g: Gfx, opts?: { custom?: boolean }) => void;
   addEvidence: (w: World, rec: Omit<EvidenceRecord, 'time'>) => boolean;
   setInterp: (w: World, cat: CategoryId, i: Interp) => void;
   setInspectClass: (poi: string, cat: CategoryId) => void;
@@ -186,13 +206,15 @@ export const useGame = create<GameState>()(
         fov: 70,
         keys: { ...DEFAULT_KEYS },
         subtitles: true,
+        ...DEFAULT_GFX_SETTINGS,
       },
       ...initialProgress(),
 
       checkpoint: 'intro',
-      setPhase: (p) => set(p === 'menu' || p === 'intro' || p === 'ending' ? { phase: p } : { phase: p, checkpoint: p }),
+      setPhase: (p) => set(p === 'menu' || p === 'intro' || p === 'ending' || p === 'assess' || p === 'tutorial' ? { phase: p } : { phase: p, checkpoint: p }),
       newGame: () => set({ ...initialProgress(), started: true, missionStart: now(), phase: 'intro' }),
       setSettings: (s) => set({ settings: { ...get().settings, ...s } }),
+      applyGfx: (g, opts) => set({ settings: { ...get().settings, gfx: { ...g }, quality: g.terrain, gfxCustom: opts?.custom ?? get().settings.gfxCustom } }),
       addEvidence: (w, rec) => {
         const k = w === 'earth' ? 'earthEvidence' : 'marsEvidence';
         const cur = get()[k];
@@ -256,6 +278,12 @@ export const useGame = create<GameState>()(
         const { phase, ...rest } = s as any;
         return rest;
       },
+      // Older saves don't have the newer settings fields — merge them with defaults instead of replacing.
+      merge: (persisted: any, current) => ({
+        ...current,
+        ...(persisted ?? {}),
+        settings: { ...current.settings, ...(persisted?.settings ?? {}), keys: { ...current.settings.keys, ...(persisted?.settings?.keys ?? {}) } },
+      }),
     },
   ),
 );

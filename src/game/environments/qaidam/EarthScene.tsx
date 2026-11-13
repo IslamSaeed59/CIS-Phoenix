@@ -12,6 +12,7 @@ import { EARTH_POIS, type EarthPOI } from '../../../data/earth/earthData';
 import { TOOLS, useTool, poiRadius, logEvidence } from '../../instruments/earthInstruments';
 import { sharedUniforms } from '../../core/shaders';
 import { EarthHUD } from '../../../ui/hud/EarthHUD';
+import { GameCanvas } from '../../core/GameCanvas';
 import { GuideBeacon } from '../../missions/GuideBeacon';
 import { FirstPersonRig } from '../../player/FirstPersonRig';
 import { playFP } from '../../player/fpAnim';
@@ -28,6 +29,7 @@ const OBSTACLES: Obstacle[] = [
 ];
 
 let interactTarget: EarthPOI | null = null;
+let saveTick = 0;
 
 function Systems() {
   const { camera, gl } = useThree();
@@ -89,8 +91,9 @@ function Systems() {
       const verb = best.interactLabel ?? (best.inspectable ? `Inspect ${best.name}` : best.name);
       ui.setPrompt(verb);
     } else ui.setPrompt(null);
-    // periodically save position
-    useGame.getState().setPlayerPos([p.x, p.y, p.z]);
+    // save position every ~3 s (each save rewrites the whole local save file)
+    saveTick = (saveTick + 1) % 30;
+    if (saveTick === 0) useGame.getState().setPlayerPos([p.x, p.y, p.z]);
   });
   return null;
 }
@@ -218,7 +221,7 @@ export function EarthScene() {
     if (first) {
       setTimeout(() => radio('ROVI', 'Hi, I am ROVI! Follow the cyan light — it shows where to go.'), 1800);
     }
-    return () => { audio.stopLoop('wind'); };
+    return () => { audio.stopLoop('wind'); useGame.getState().setPlayerPos([runtime.pos.x, runtime.pos.y, runtime.pos.z]); };
   }, []);
 
   // Earth completion notice
@@ -236,16 +239,11 @@ export function EarthScene() {
 
   return (
     <>
-      <Canvas
-        shadows={quality !== 'low'}
-        dpr={quality === 'high' ? [1, 2] : quality === 'medium' ? [1, 1.5] : [0.75, 1]}
-        gl={{ preserveDrawingBuffer: true, antialias: quality !== 'low', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
-        camera={{ fov: 70, near: 0.1, far: 6000, position: [0, 2, 130] }}
-      >
+      <GameCanvas preserve camera={{ fov: 70, near: 0.1, far: 6000, position: [0, 2, 130] }}>
         <Suspense fallback={null}>
           <Scene />
         </Suspense>
-      </Canvas>
+      </GameCanvas>
       <EarthHUD />
     </>
   );

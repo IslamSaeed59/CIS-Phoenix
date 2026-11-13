@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { RoverFeedCanvas, feedState } from '../../game/camera/RoverFeed';
-import { rover, useRover, CAMS, instruments, type CamId } from '../../game/rover/roverSim';
+import { rover, useRover, CAMS, VISIBLE_CAMS, instruments, type CamId } from '../../game/rover/roverSim';
 import { useGame, worldProgress } from '../../game/core/store';
 import { audio } from '../../game/core/audio';
 import { Rovi } from '../../ui/common';
@@ -78,8 +78,8 @@ export function RoverControl({ active, onOpen }: { active: boolean; onOpen: (app
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'KeyP') instruments.capture();
       if (e.code === useGame.getState().settings.keys.camera) {
-        const i = CAMS.findIndex((c) => c.id === rover.cam);
-        rover.cam = CAMS[(i + 1) % CAMS.length].id;
+        const i = VISIBLE_CAMS.findIndex((c) => c.id === rover.cam);
+        rover.cam = VISIBLE_CAMS[(i + 1) % VISIBLE_CAMS.length].id;
       }
     };
     window.addEventListener('keydown', onKey);
@@ -119,7 +119,7 @@ export function RoverControl({ active, onOpen }: { active: boolean; onOpen: (app
       <div className="col" style={{ position: 'absolute', top: 14, right: 14, gap: 4, alignItems: 'flex-end' }}>
         <span className="panel mono tiny" style={{ padding: '5px 9px', borderRadius: 6 }}><Icon name="camera" size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />{cam.name}</span>
         <div className="row" style={{ gap: 4 }}>
-          {CAMS.map((c) => (
+          {VISIBLE_CAMS.map((c) => (
             <button key={c.id} className={`btn sm ${rover.cam === c.id ? 'active' : ''}`} style={{ padding: '3px 6px', fontSize: 9 }} onClick={() => { rover.cam = c.id as CamId; audio.ui('click'); }}>{c.id}</button>
           ))}
         </div>

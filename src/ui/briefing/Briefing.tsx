@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import { gfxDpr } from '../../game/core/graphics';
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useGame } from '../../game/core/store';
@@ -24,7 +26,7 @@ export function Briefing() {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 70% 40%, #0f1b20, #05080a 70%)' }}>
       <div style={{ position: 'absolute', right: '-10vw', top: '-4vh', width: '60vw', height: '108vh', opacity: 0.5 }}>
-        <Canvas camera={{ position: [0, 4, 38], fov: 40 }}>
+        <Canvas dpr={gfxDpr(useGame.getState().settings.gfx)} gl={{ antialias: useGame.getState().settings.gfx.aa, toneMapping: THREE.ACESFilmicToneMapping }} camera={{ position: [0, 4, 38], fov: 40 }}>
           <Starfield count={1500} />
           <directionalLight position={[10, 10, 30]} intensity={2.4} />
           <ambientLight intensity={0.08} />

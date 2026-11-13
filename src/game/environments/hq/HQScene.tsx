@@ -8,6 +8,7 @@ import { useUI, radio, fadeTo, wait } from '../../core/ui';
 import { audio } from '../../core/audio';
 import { matches, isTyping, keyLabel } from '../../core/input';
 import { Laptop } from '../../../laptop/desktop/Laptop';
+import { GameCanvas } from '../../core/GameCanvas';
 import { RadioFeed, Toasts } from '../../../ui/common';
 import { PauseMenu } from '../../../ui/pause/PauseMenu';
 import { CATEGORIES } from '../../../data/scientific-checklist/categories';
@@ -303,7 +304,7 @@ export function HQScene() {
   const panel = useUI((s) => s.panel);
   const prompt = useUI((s) => s.prompt);
   const [mode, setMode] = useState<typeof hqState.mode>('walk');
-  const quality = useGame((s) => s.settings.quality);
+  const shadowQ = useGame((s) => s.settings.gfx.shadows);
   const keys = useGame((s) => s.settings.keys);
 
   useEffect(() => {
@@ -375,10 +376,10 @@ export function HQScene() {
   const ep = worldProgress('earth', g);
   return (
     <>
-      <Canvas shadows={quality !== 'low'} dpr={[1, 1.5]} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }} camera={{ fov: 70, position: [0, 1.7, 8.5], near: 0.03, far: 100 }} onCreated={({ camera, scene }) => { (window as any).__hqCam = camera; scene.background = new THREE.Color('#07090b'); scene.fog = new THREE.Fog('#07090b', 18, 40); }}>
+      <GameCanvas camera={{ fov: 70, position: [0, 1.7, 8.5], near: 0.03, far: 100 }} onCreated={({ camera, scene }) => { (window as any).__hqCam = camera; scene.background = new THREE.Color('#07090b'); scene.fog = new THREE.Fog('#07090b', 18, 40); }}>
         <ambientLight intensity={0.55} />
         <hemisphereLight args={['#bfe', '#223', 0.6]} />
-        <pointLight position={[0, 5, 0]} intensity={70} distance={26} decay={1.6} color="#d6f3f5" castShadow={quality === 'high'} />
+        <pointLight position={[0, 5, 0]} intensity={70} distance={26} decay={1.6} color="#d6f3f5" castShadow={shadowQ === 'high' || shadowQ === 'medium'} />
         <pointLight position={[-8, 5, 4]} intensity={40} distance={20} decay={1.6} color="#d6f3f5" />
         <pointLight position={[8, 5, 4]} intensity={40} distance={20} decay={1.6} color="#d6f3f5" />
         <Room />
@@ -394,7 +395,7 @@ export function HQScene() {
           { x: 0, z: 0.6, r: 0.75 }, { x: -0.6, z: 0.6, r: 0.7 }, { x: 0.6, z: 0.6, r: 0.7 },
         ]} bounds={{ radius: 0, rect: [-14, -9, 14, 10] }} walk={2.6} sprint={4.5} showBody={false} />}
         <CameraDirector onSeated={() => setMode('laptop')} />
-      </Canvas>
+      </GameCanvas>
       {mode === 'walk' && (
         <div className="layer" style={{ zIndex: 10 }}>
           <div className="hud-top">

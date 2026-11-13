@@ -15,11 +15,13 @@ import { photoWithFX } from '../core/fx';
 export type CamId = 'NAVCAM' | 'MASTCAM' | 'HAZ-F' | 'HAZ-R' | 'ARMCAM';
 export const CAMS: { id: CamId; name: string; fov: number; desc: string }[] = [
   { id: 'NAVCAM', name: 'Navigation Camera', fov: 60, desc: 'Mast-mounted, wide-angle, pan/tilt' },
-  { id: 'MASTCAM', name: 'Mast Camera (zoom)', fov: 34, desc: 'Science colour camera, optical zoom' },
+  { id: 'MASTCAM', name: 'Colour Scanner', fov: 34, desc: 'Used automatically by the colour scan' },
   { id: 'HAZ-F', name: 'Front Hazard Camera', fov: 100, desc: 'Fixed, wide-angle, low' },
   { id: 'HAZ-R', name: 'Rear Hazard Camera', fov: 100, desc: 'Fixed, rear-facing' },
   { id: 'ARMCAM', name: 'Arm Inspection Camera', fov: 40, desc: 'Close-up imager on robotic arm' },
 ];
+/** Cameras the player can switch between (the colour-scan camera is used automatically). */
+export const VISIBLE_CAMS = CAMS.filter((c) => c.id !== 'MASTCAM');
 export type Mode = 'IDLE' | 'DIRECT' | 'AUTONAV' | 'SAFE' | 'HIBERNATE' | 'RECOVERY' | 'ARM' | 'FAULT';
 
 export interface Wheel { id: string; health: number; current: number; temp: number; fault: boolean }

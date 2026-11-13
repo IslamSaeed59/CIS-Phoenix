@@ -7,6 +7,7 @@ import { rover, stepRover, CAMS } from '../rover/roverSim';
 import { sharedUniforms } from '../core/shaders';
 import { useGame } from '../core/store';
 import { fxState } from '../core/fx';
+import { GameCanvas } from '../core/GameCanvas';
 
 export const feedState = { cine: 0, exposure: 0, blur: 0 };
 
@@ -108,19 +109,13 @@ export function useRoverLoop(active: boolean) {
   }, [active]);
 }
 
-export function RoverFeedCanvas() {
-  const quality = useGame((s) => s.settings.quality);
+export function RoverFeedCanvas({ monitor = true }: { monitor?: boolean }) {
   return (
-    <Canvas
-      shadows={quality !== 'low'}
-      dpr={quality === 'high' ? [1, 1.5] : quality === 'medium' ? [1, 1.25] : [0.7, 1]}
-      gl={{ preserveDrawingBuffer: true, antialias: quality !== 'low', toneMapping: THREE.ACESFilmicToneMapping }}
-      camera={{ fov: 60, near: 0.05, far: 6000, position: [0, 3, 60] }}
-    >
+    <GameCanvas preserve monitor={monitor} camera={{ fov: 60, near: 0.05, far: 6000, position: [0, 3, 60] }}>
       <MarsWorld />
       <RoverModel />
       <CameraRig />
-    </Canvas>
+    </GameCanvas>
   );
 }
 

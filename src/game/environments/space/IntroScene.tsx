@@ -1,3 +1,4 @@
+import { gfxDpr } from '../../core/graphics';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -5,6 +6,7 @@ import { EarthGlobe, Starfield, latLonToVec } from './planets';
 import { useGame } from '../../core/store';
 import { fadeTo } from '../../core/ui';
 import { audio } from '../../core/audio';
+import { afterIntro } from '../../core/onboarding';
 import { smoothstep, lerp } from '../../core/noise';
 
 const QAIDAM: [number, number] = [37.3, 94.5]; // approximate basin centre (degrees)
@@ -57,8 +59,7 @@ export function IntroScene() {
     done.current = true;
     await fadeTo(1, 900);
     audio.stopLoop('space');
-    setPhase('briefing');
-    fadeTo(0, 700);
+    afterIntro();
   };
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function IntroScene() {
   const show = (a: number, b: number) => ({ opacity: smoothstep(a, a + 1.2, time) * (1 - smoothstep(b - 1.2, b, time)), transition: 'opacity .2s' });
   return (
     <div className="letterbox" style={{ position: 'fixed', inset: 0, background: '#000' }}>
-      <Canvas camera={{ fov: 40, near: 0.1, far: 3000, position: [0, 0, 46] }} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}>
+      <Canvas dpr={gfxDpr(useGame.getState().settings.gfx)} gl={{ antialias: useGame.getState().settings.gfx.aa, toneMapping: THREE.ACESFilmicToneMapping }} camera={{ fov: 40, near: 0.1, far: 3000, position: [0, 0, 46] }}>
         <color attach="background" args={['#000']} />
         <Starfield />
         <ambientLight intensity={0.08} />

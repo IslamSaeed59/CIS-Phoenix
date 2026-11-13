@@ -6,6 +6,7 @@ import { makeRockGeometry, patchMaterial, sharedUniforms } from '../../core/shad
 import { getMarsHF, MARS_RES, marsColor, marsSurf, MARS_WIND, escarpEdge } from './marsTerrain';
 import { BOULDERS } from './marsProps';
 import { useGame } from '../../core/store';
+import { SHADOW_MAP } from '../../core/graphics';
 import { rover, isDay } from '../../rover/roverSim';
 import { Noise2D, smoothstep } from '../../core/noise';
 
@@ -73,7 +74,7 @@ function Boulders({ hf }: { hf: Heightfield }) {
 
 function Pebbles({ hf }: { hf: Heightfield }) {
   const q = useGame((s) => s.settings.quality);
-  const count = q === 'high' ? 5000 : q === 'medium' ? 3000 : 1400;
+  const count = Math.round(3600 * useGame((s) => s.settings.gfx.density));
   const ref = useRef<THREE.InstancedMesh>(null);
   const geo = useMemo(() => makeRockGeometry(5, 0), []);
   const mat = useMemo(() => patchMaterial(new THREE.MeshStandardMaterial({ color: '#6a4535', roughness: 0.9 }), { absorb: 0.8, inertia: 0.7 }), []);
@@ -197,14 +198,14 @@ function MarsSky() {
 }
 
 function DustParticles() {
-  const N = 1800;
+  const N = Math.max(150, Math.round(1800 * useGame((s) => s.settings.gfx.particles)));
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry();
     const p = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) p.set([(Math.random() - 0.5) * 60, Math.random() * 8, (Math.random() - 0.5) * 60], i * 3);
     g.setAttribute('position', new THREE.BufferAttribute(p, 3));
     return g;
-  }, []);
+  }, [N]);
   const mat = useRef<THREE.PointsMaterial>(null);
   useFrame((_, dt) => {
     const p = geo.attributes.position as THREE.BufferAttribute;
@@ -260,7 +261,7 @@ export function MarsWorld({ shadows = true }: { shadows?: boolean }) {
   const { scene, camera } = useThree();
   const sun = useRef<THREE.DirectionalLight>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
-  const quality = useGame((s) => s.settings.quality);
+  const gfx = useGame((s) => s.settings.gfx);
   const sunDir = useMemo(() => new THREE.Vector3(0.45, 0.55, 0.35).normalize(), []);
   useEffect(() => {
     scene.fog = new THREE.FogExp2('#b78560', 0.0022);
@@ -272,7 +273,7 @@ export function MarsWorld({ shadows = true }: { shadows?: boolean }) {
     sharedUniforms.uTime.value = clock.elapsedTime;
     sharedUniforms.uSunView.value.copy(sunDir).transformDirection(camera.matrixWorldInverse);
     const fog = scene.fog as THREE.FogExp2;
-    fog.density = 0.0022 + rover.storm * 0.02;
+    fog.density = 0.0022 / gfx.viewDistance + rover.storm * 0.02;
     const day = sharedUniforms.uDay.value;
     fog.color.setRGB(0.6 * day + 0.02, 0.4 * day + 0.015, 0.28 * day + 0.02);
     if (rover.storm > 0) fog.color.lerp(new THREE.Color('#a77450'), rover.storm * day);
@@ -293,8 +294,8 @@ export function MarsWorld({ shadows = true }: { shadows?: boolean }) {
         ref={sun}
         intensity={2.2}
         color="#ffe2c4"
-        castShadow={shadows && quality !== 'low'}
-        shadow-mapSize={[2048, 2048]}
+        castShadow={shadows && gfx.shadows !== 'off'}
+        shadow-mapSize={[SHADOW_MAP[gfx.shadows] || 1024, SHADOW_MAP[gfx.shadows] || 1024]}
         shadow-camera-left={-40}
         shadow-camera-right={40}
         shadow-camera-top={40}

@@ -3,12 +3,12 @@ import { useGame, comparisonProgress, interpFor, catStatus } from '../../game/co
 import { CATEGORIES, CAT_BY_ID, type CategoryId } from '../../data/scientific-checklist/categories';
 import { COMPARISON_STATEMENTS, APPLICATIONS, type StatementClass } from '../../data/scientific-checklist/comparison';
 import { TopoModel } from '../../ui/journal/Views';
-import { getQaidamHF } from '../../game/environments/qaidam/qaidamTerrain';
+import { getQaidamHF, QAIDAM_RES } from '../../game/environments/qaidam/qaidamTerrain';
 import { getMarsHF, MARS_RES } from '../../game/environments/mars/marsTerrain';
 import { audio } from '../../game/core/audio';
 import { StatusChip } from '../../ui/common';
 
-const Q_RES = { low: 220, medium: 300, high: 400 } as const;
+const Q_RES = QAIDAM_RES;
 
 export function AnalysisApp() {
   const [tab, setTab] = useState<'datasets' | 'viz' | 'sims' | 'conclusions'>('conclusions');

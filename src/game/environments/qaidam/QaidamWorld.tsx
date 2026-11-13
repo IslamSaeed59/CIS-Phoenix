@@ -5,14 +5,15 @@ import { Sky, Stars } from '@react-three/drei';
 import { buildTerrainGeometry, Heightfield } from '../../core/terrain';
 import { makeRockGeometry, makeRockMaterial, patchMaterial, sharedUniforms } from '../../core/shaders';
 import {
-  getQaidamHF, mountainHeight, qaidamColor, qaidamSurf, PLAY_SIZE, WIND_DIR, CHANNEL, cliffEdge,
+  getQaidamHF, QAIDAM_RES, mountainHeight, qaidamColor, qaidamSurf, PLAY_SIZE, WIND_DIR, CHANNEL, cliffEdge,
 } from './qaidamTerrain';
 import { useGame } from '../../core/store';
 import { useUI } from '../../core/ui';
+import { SHADOW_MAP } from '../../core/graphics';
 import { EARTH_POIS } from '../../../data/earth/earthData';
 import { Noise2D, mulberry32, smoothstep } from '../../core/noise';
 
-const QUALITY_RES = { low: 220, medium: 300, high: 400 } as const;
+const QUALITY_RES = QAIDAM_RES;
 
 export function useQaidamHF() {
   const q = useGame((s) => s.settings.quality);
@@ -68,7 +69,8 @@ function Mountains() {
 
 function Scatter({ hf }: { hf: Heightfield }) {
   const q = useGame((s) => s.settings.quality);
-  const count = q === 'high' ? 2600 : q === 'medium' ? 1600 : 800;
+  const density = useGame((s) => s.settings.gfx.density);
+  const count = Math.round(2000 * density);
   const { geo, mat, matrices } = useMemo(() => {
     const geo = makeRockGeometry(3, 1);
     const mat = makeRockMaterial('#7d7266', 0.8, 0.85);
@@ -94,7 +96,7 @@ function Scatter({ hf }: { hf: Heightfield }) {
       list.push(m.clone().compose(p, qn, s));
     }
     // Dense gravel lag clasts
-    for (let i = 0; i < (q === 'low' ? 500 : 1100); i++) {
+    for (let i = 0; i < Math.round(1100 * density); i++) {
       const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd()) * 28;
       const x = -75 + Math.cos(a) * rr, z = 70 + Math.sin(a) * rr;
       const size = 0.05 + rnd() * 0.12;
@@ -105,7 +107,7 @@ function Scatter({ hf }: { hf: Heightfield }) {
       list.push(m.clone().compose(p, qn, s));
     }
     return { geo, mat, matrices: list };
-  }, [hf, count, q]);
+  }, [hf, count, density]);
   const ref = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -117,11 +119,12 @@ function Scatter({ hf }: { hf: Heightfield }) {
 }
 
 function HaliteCrystals({ hf }: { hf: Heightfield }) {
+  const density = useGame((s) => s.settings.gfx.density);
   const { matrices } = useMemo(() => {
     const rnd = mulberry32(5);
     const list: THREE.Matrix4[] = [];
     const m = new THREE.Matrix4(), qn = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
-    for (let i = 0; i < 900; i++) {
+    for (let i = 0; i < Math.round(900 * density); i++) {
       const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd()) * 70;
       const x = -205 + Math.cos(a) * rr, z = -148 + Math.sin(a) * rr;
       const size = 0.06 + Math.pow(rnd(), 2) * 0.5;
@@ -132,7 +135,7 @@ function HaliteCrystals({ hf }: { hf: Heightfield }) {
       list.push(m.clone().compose(p, qn, s));
     }
     return { matrices: list };
-  }, [hf]);
+  }, [hf, density]);
   const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const mat = useMemo(() => patchMaterial(new THREE.MeshStandardMaterial({ color: '#f1efe9', roughness: 0.35, metalness: 0.0 }), { absorb: 0.28, inertia: 0.55, detailAmount: 0.08 }), []);
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -145,13 +148,14 @@ function HaliteCrystals({ hf }: { hf: Heightfield }) {
 }
 
 function ChannelCobbles({ hf }: { hf: Heightfield }) {
+  const density = useGame((s) => s.settings.gfx.density);
   const matrices = useMemo(() => {
     const rnd = mulberry32(17);
     const list: THREE.Matrix4[] = [];
     const m = new THREE.Matrix4(), qn = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
     for (let i = 0; i < CHANNEL.length - 1; i++) {
       const [ax, az] = CHANNEL[i], [bx, bz] = CHANNEL[i + 1];
-      for (let k = 0; k < 70; k++) {
+      for (let k = 0; k < Math.round(70 * density); k++) {
         const t = rnd();
         const x = ax + (bx - ax) * t + (rnd() - 0.5) * 7, z = az + (bz - az) * t + (rnd() - 0.5) * 7;
         const size = 0.08 + rnd() * 0.22;
@@ -163,7 +167,7 @@ function ChannelCobbles({ hf }: { hf: Heightfield }) {
       }
     }
     return list;
-  }, [hf]);
+  }, [hf, density]);
   const geo = useMemo(() => new THREE.SphereGeometry(1, 8, 6), []);
   const mat = useMemo(() => makeRockMaterial('#8a8174', 0.65, 0.6), []);
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -347,14 +351,14 @@ function POIMarkers({ hf }: { hf: Heightfield }) {
 }
 
 function Dust({ center }: { center: React.MutableRefObject<THREE.Vector3> }) {
-  const N = 1400;
+  const N = Math.max(120, Math.round(1400 * useGame((s) => s.settings.gfx.particles)));
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry();
     const p = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) p.set([(Math.random() - 0.5) * 80, Math.random() * 6, (Math.random() - 0.5) * 80], i * 3);
     g.setAttribute('position', new THREE.BufferAttribute(p, 3));
     return g;
-  }, []);
+  }, [N]);
   const ref = useRef<THREE.Points>(null);
   useFrame((_, dt) => {
     const p = geo.attributes.position as THREE.BufferAttribute;
@@ -380,7 +384,7 @@ function Dust({ center }: { center: React.MutableRefObject<THREE.Vector3> }) {
 export function QaidamWorld({ playerRef }: { playerRef: React.MutableRefObject<THREE.Vector3> }) {
   const hf = useQaidamHF();
   const time = useGame((s) => s.earthTime);
-  const quality = useGame((s) => s.settings.quality);
+  const gfx = useGame((s) => s.settings.gfx);
   const sun = useRef<THREE.DirectionalLight>(null);
   const { scene, camera } = useThree();
   const sunDir = useMemo(() => sunDirection(time), [time]);
@@ -388,10 +392,10 @@ export function QaidamWorld({ playerRef }: { playerRef: React.MutableRefObject<T
   const thermal = useUI((s) => s.tool === 'thermal' && s.toolRaised);
 
   useEffect(() => {
-    scene.fog = new THREE.FogExp2(isDay ? '#c9c4bb' : '#0a0e18', isDay ? 0.0009 : 0.0022);
+    scene.fog = new THREE.FogExp2(isDay ? '#c9c4bb' : '#0a0e18', (isDay ? 0.0009 : 0.0022) / gfx.viewDistance);
     scene.background = new THREE.Color(isDay ? '#a9bccf' : '#05070d');
     sharedUniforms.uDay.value = isDay ? 1 : 0;
-  }, [isDay, scene]);
+  }, [isDay, scene, gfx.viewDistance]);
 
   useFrame(({ clock }) => {
     sharedUniforms.uTime.value = clock.elapsedTime;
@@ -416,8 +420,8 @@ export function QaidamWorld({ playerRef }: { playerRef: React.MutableRefObject<T
         ref={sun}
         intensity={isDay ? 2.6 : 0.8}
         color={isDay ? '#fff1dc' : '#9fb4e0'}
-        castShadow={quality !== 'low'}
-        shadow-mapSize={quality === 'high' ? [4096, 4096] : [2048, 2048]}
+        castShadow={gfx.shadows !== 'off'}
+        shadow-mapSize={[SHADOW_MAP[gfx.shadows] || 1024, SHADOW_MAP[gfx.shadows] || 1024]}
         shadow-camera-left={-70}
         shadow-camera-right={70}
         shadow-camera-top={70}

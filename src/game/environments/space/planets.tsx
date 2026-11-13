@@ -2,6 +2,8 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Noise2D } from '../../core/noise';
+import { useGame } from '../../core/store';
+import { TEX_SIZE, ANISO } from '../../core/graphics';
 
 // Coarse continent outlines (lon, lat) hand-simplified for a stylised globe. Not cartographically precise.
 const CONTINENTS: [number, number][][] = [
@@ -28,24 +30,24 @@ export function latLonToVec(lat: number, lon: number, r = 1) {
   return new THREE.Vector3(-Math.cos(phi) * Math.cos(la) * r, Math.sin(la) * r, Math.sin(phi) * Math.cos(la) * r);
 }
 
-function earthTextures() {
-  const W = 1024, H = 512;
+function earthTextures(W = 1024, aniso = 4) {
+  const H = W / 2, MW = 1024, MH = 512, k = MW / W;
   const mask = document.createElement('canvas');
-  mask.width = W; mask.height = H;
+  mask.width = MW; mask.height = MH;
   const mctx = mask.getContext('2d')!;
-  mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H);
+  mctx.fillStyle = '#000'; mctx.fillRect(0, 0, MW, MH);
   mctx.fillStyle = '#fff';
   CONTINENTS.forEach((poly) => {
     mctx.beginPath();
     poly.forEach(([lon, lat], i) => {
-      const x = ((lon + 180) / 360) * W, y = ((90 - lat) / 180) * H;
+      const x = ((lon + 180) / 360) * MW, y = ((90 - lat) / 180) * MH;
       i ? mctx.lineTo(x, y) : mctx.moveTo(x, y);
     });
     mctx.closePath();
     mctx.fill();
   });
-  mctx.fillRect(0, ((90 + 68) / 180) * H, W, H); // Antarctica
-  const md = mctx.getImageData(0, 0, W, H).data;
+  mctx.fillRect(0, ((90 + 68) / 180) * MH, MW, MH); // Antarctica
+  const md = mctx.getImageData(0, 0, MW, MH).data;
   const n = new Noise2D(42);
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
@@ -55,15 +57,17 @@ function earthTextures() {
   cloud.width = W; cloud.height = H;
   const cctx = cloud.getContext('2d')!;
   const cimg = cctx.createImageData(W, H);
-  for (let y = 0; y < H; y++) {
-    const lat = 90 - (y / H) * 180;
-    for (let x = 0; x < W; x++) {
-      const lon = (x / W) * 360 - 180;
-      const o = (y * W + x) * 4;
+  for (let py = 0; py < H; py++) {
+    const y = py * k;
+    const lat = 90 - (py / H) * 180;
+    for (let px = 0; px < W; px++) {
+      const x = px * k;
+      const lon = (px / W) * 360 - 180;
+      const o = (py * W + px) * 4;
       // coastline wobble
       const wob = n.fbm(x * 0.03, y * 0.03, 3) * 6;
-      const sx = Math.min(W - 1, Math.max(0, Math.round(x + wob))), sy = Math.min(H - 1, Math.max(0, Math.round(y + wob * 0.7)));
-      const land = md[(sy * W + sx) * 4] > 128;
+      const sx = Math.min(MW - 1, Math.max(0, Math.round(x + wob))), sy = Math.min(MH - 1, Math.max(0, Math.round(y + wob * 0.7)));
+      const land = md[(sy * MW + sx) * 4] > 128;
       const tex = n.fbm(x * 0.02, y * 0.02, 5) * 0.5 + 0.5;
       let r, g, b;
       if (land) {
@@ -103,22 +107,24 @@ function earthTextures() {
   cctx.putImageData(cimg, 0, 0);
   const map = new THREE.CanvasTexture(out);
   map.colorSpace = THREE.SRGBColorSpace;
-  map.anisotropy = 4;
+  map.anisotropy = aniso;
   const clouds = new THREE.CanvasTexture(cloud);
   return { map, clouds };
 }
 
-function marsTexture() {
-  const W = 1024, H = 512;
+function marsTexture(W = 1024, aniso = 4) {
+  const H = W / 2, k = 1024 / W;
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const ctx = c.getContext('2d')!;
   const img = ctx.createImageData(W, H);
   const n = new Noise2D(4);
-  for (let y = 0; y < H; y++) {
-    const lat = 90 - (y / H) * 180;
-    for (let x = 0; x < W; x++) {
-      const o = (y * W + x) * 4;
+  for (let py = 0; py < H; py++) {
+    const y = py * k;
+    const lat = 90 - (py / H) * 180;
+    for (let px = 0; px < W; px++) {
+      const x = px * k;
+      const o = (py * W + px) * 4;
       const t = n.fbm(x * 0.008, y * 0.016, 6) * 0.5 + 0.5;
       const d = n.fbm(x * 0.03 + 9, y * 0.06, 4) * 0.5 + 0.5;
       let r = 170 + t * 60, g = 92 + t * 35, b = 58 + t * 20;
@@ -127,7 +133,7 @@ function marsTexture() {
       const m = 1 - dk * 0.3;
       r *= m; g *= m; b *= m;
       // canyon-like streak near equator (stylised)
-      if (Math.abs(lat + 8 + Math.sin(x * 0.02) * 2) < 1.6 && x > W * 0.55 && x < W * 0.75) { r *= 0.6; g *= 0.55; b *= 0.55; }
+      if (Math.abs(lat + 8 + Math.sin(x * 0.02) * 2) < 1.6 && x > 1024 * 0.55 && x < 1024 * 0.75) { r *= 0.6; g *= 0.55; b *= 0.55; }
       // craters
       const cr = n.noise(x * 0.09, y * 0.18);
       const cm = 1 - Math.min(1, Math.max(0, (cr - 0.55) / 0.12)) * 0.15;
@@ -140,6 +146,7 @@ function marsTexture() {
   ctx.putImageData(img, 0, 0);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = aniso;
   return t;
 }
 
@@ -167,11 +174,16 @@ export function Atmosphere({ radius, color, power = 2.6 }: { radius: number; col
   );
 }
 
-let earthTexCache: ReturnType<typeof earthTextures> | null = null;
-let marsTexCache: THREE.Texture | null = null;
+// Cached per texture-quality level (procedural generation is expensive at high resolution).
+const earthTexCache = new Map<string, ReturnType<typeof earthTextures>>();
+const marsTexCache = new Map<string, THREE.Texture>();
+const texQ = () => useGame.getState().settings.gfx.textures;
+function getEarthTex() { const q = texQ(); if (!earthTexCache.has(q)) earthTexCache.set(q, earthTextures(TEX_SIZE[q], ANISO[q])); return earthTexCache.get(q)!; }
+function getMarsTex() { const q = texQ(); if (!marsTexCache.has(q)) marsTexCache.set(q, marsTexture(TEX_SIZE[q], ANISO[q])); return marsTexCache.get(q)!; }
 
 export function EarthGlobe({ radius = 10, spin = 0.01, markerLatLon, children }: { radius?: number; spin?: number; markerLatLon?: [number, number]; children?: React.ReactNode }) {
-  const tex = useMemo(() => (earthTexCache ??= earthTextures()), []);
+  const tq = useGame((s) => s.settings.gfx.textures);
+  const tex = useMemo(() => getEarthTex(), [tq]);
   const g = useRef<THREE.Group>(null);
   const cl = useRef<THREE.Mesh>(null);
   const marker = useRef<THREE.Mesh>(null);
@@ -204,7 +216,8 @@ export function EarthGlobe({ radius = 10, spin = 0.01, markerLatLon, children }:
 }
 
 export function MarsGlobe({ radius = 6, spin = 0.01 }: { radius?: number; spin?: number }) {
-  const tex = useMemo(() => (marsTexCache ??= marsTexture()), []);
+  const tq = useGame((s) => s.settings.gfx.textures);
+  const tex = useMemo(() => getMarsTex(), [tq]);
   const g = useRef<THREE.Mesh>(null);
   useFrame((_, dt) => { if (g.current) g.current.rotation.y += dt * spin; });
   return (

@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import { gfxDpr } from '../game/core/graphics';
 import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useGame, worldProgress, resumePhase, scienceScore } from '../game/core/store';
@@ -5,6 +7,7 @@ import { fadeTo } from '../game/core/ui';
 import { audio } from '../game/core/audio';
 import { MarsGlobe, Starfield } from '../game/environments/space/planets';
 import { SettingsPanel, ControlsPanel } from './pause/PauseMenu';
+import { GraphicsPanel } from './settings/GraphicsPanel';
 
 const DEV = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('dev');
 
@@ -57,7 +60,7 @@ export function BootScreen({ onDone }: { onDone: () => void }) {
 
 export function MainMenu() {
   const s = useGame();
-  const [sub, setSub] = useState<null | 'settings' | 'controls' | 'chapters' | 'about' | 'confirm'>(null);
+  const [sub, setSub] = useState<null | 'settings' | 'graphics' | 'controls' | 'chapters' | 'about' | 'confirm'>(null);
   const ep = worldProgress('earth', s);
   const mp = worldProgress('mars', s);
   const go = async (fn: () => void) => {
@@ -78,7 +81,7 @@ export function MainMenu() {
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
       <div className="menu-bg">
-        <Canvas camera={{ position: [0, 0, 22], fov: 40 }}>
+        <Canvas dpr={gfxDpr(useGame.getState().settings.gfx)} gl={{ antialias: useGame.getState().settings.gfx.aa, toneMapping: THREE.ACESFilmicToneMapping }} camera={{ position: [0, 0, 22], fov: 40 }}>
           <Starfield count={5000} />
           <ambientLight intensity={0.05} />
           <directionalLight position={[-20, 6, 12]} intensity={2.6} color="#ffe8d6" />
@@ -96,6 +99,7 @@ export function MainMenu() {
         <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => (s.started ? setSub('confirm') : newGame())}>New mission</button>
         <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => setSub('chapters')}>Chapter select</button>
         <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => setSub('settings')}>Settings</button>
+        <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => setSub('graphics')}>Graphics</button>
         <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => setSub('controls')}>Controls</button>
         <button className="menu-item" onMouseEnter={() => audio.ui('hover')} onClick={() => setSub('about')}>Science &amp; credits</button>
         {s.started && (
@@ -114,6 +118,7 @@ export function MainMenu() {
             </div>
             <div className="scroll" style={{ padding: 18 }}>
               {sub === 'settings' && <SettingsPanel />}
+              {sub === 'graphics' && <GraphicsPanel />}
               {sub === 'controls' && <ControlsPanel />}
               {sub === 'confirm' && (
                 <div className="col">

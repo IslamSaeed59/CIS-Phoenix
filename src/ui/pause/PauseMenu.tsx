@@ -1,3 +1,5 @@
+import { GraphicsPanel } from '../settings/GraphicsPanel';
+import { replay } from '../../game/core/onboarding';
 import { useEffect, useState } from 'react';
 import { useGame, DEFAULT_KEYS, type KeyAction } from '../../game/core/store';
 import { useUI, fadeTo } from '../../game/core/ui';
@@ -15,14 +17,9 @@ export function SettingsPanel() {
   const set = useGame((x) => x.setSettings);
   return (
     <div className="col" style={{ gap: 14 }}>
-      <div>
-        <div className="label">Graphics quality</div>
-        <div className="row" style={{ marginTop: 6 }}>
-          {(['low', 'medium', 'high'] as const).map((q) => (
-            <button key={q} className={`btn sm ${s.quality === q ? 'active' : ''}`} onClick={() => set({ quality: q })}>{q}</button>
-          ))}
-        </div>
-        <div className="tiny dim" style={{ marginTop: 4 }}>Terrain resolution, shadows, vegetation/rock density and render scale.</div>
+      <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+        <button className="btn sm" onClick={() => replay('tutorial')}>Replay controls tutorial</button>
+        <span className="tiny dim">Graphics options are in the Graphics tab.</span>
       </div>
       <Slider label="Master volume" v={s.volume} min={0} max={1} step={0.05} onChange={(v) => { set({ volume: v }); audio.setVolume(v); }} fmt={(v) => `${Math.round(v * 100)}%`} />
       <Slider label="Mouse sensitivity" v={s.sensitivity} min={0.3} max={2.5} step={0.05} onChange={(v) => set({ sensitivity: v })} fmt={(v) => v.toFixed(2)} />
@@ -82,7 +79,7 @@ export function ControlsPanel() {
 }
 
 export function PauseMenu() {
-  const [tab, setTab] = useState<'main' | 'settings' | 'controls'>('main');
+  const [tab, setTab] = useState<'main' | 'settings' | 'graphics' | 'controls'>('main');
   const setPanel = useUI((s) => s.setPanel);
   const setPhase = useGame((s) => s.setPhase);
   const resume = () => { setPanel(null); audio.ui('close'); };
@@ -100,7 +97,7 @@ export function PauseMenu() {
           <span className="mono tiny dim">PROGRESS AUTO-SAVED LOCALLY</span>
         </div>
         <div className="tabs">
-          {(['main', 'settings', 'controls'] as const).map((t) => (
+          {(['main', 'settings', 'graphics', 'controls'] as const).map((t) => (
             <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{t === 'main' ? 'Mission' : t}</button>
           ))}
         </div>
@@ -109,12 +106,14 @@ export function PauseMenu() {
             <div className="col">
               <button className="btn primary" onClick={resume}>Resume mission</button>
               <button className="btn" onClick={() => setTab('settings')}>Settings</button>
+              <button className="btn" onClick={() => setTab('graphics')}>Graphics</button>
               <button className="btn" onClick={() => setTab('controls')}>Controls</button>
               <button className="btn danger" onClick={quit}>Save &amp; return to main menu</button>
             </div>
           )}
           {tab === 'settings' && <SettingsPanel />}
           {tab === 'controls' && <ControlsPanel />}
+          {tab === 'graphics' && <GraphicsPanel />}
         </div>
       </div>
     </div>
